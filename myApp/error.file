@@ -1,0 +1,29 @@
+nohup: ignoring input
+Warning in <TFile::Append>: Replacing existing TH1: (0.000000,0.000000,0.000000),Vb=300.000000 (Potential memory leak).
+Warning in <TFile::Append>: Replacing existing TH1: BL (0.000000,0.000000,0.000000),Vb=300.000000 (Potential memory leak).
+Warning in <TFile::Append>: Replacing existing TH1: PBL (0.000000,0.000000,0.000000),Vb=300.000000 (Potential memory leak).
+Warning in <TFile::Append>: Replacing existing TH1: V(t)-bl (0.000000,0.000000,0.000000),Vb=300.000000 (Potential memory leak).
+Warning in <TFile::Append>: Replacing existing TH1: (0.000000,0.000000,0.000000),Vb=300.000000 (Potential memory leak).
+Warning in <TFile::Append>: Replacing existing TH1: BL (0.000000,0.000000,0.000000),Vb=300.000000 (Potential memory leak).
+Warning in <TFile::Append>: Replacing existing TH1: PBL (0.000000,0.000000,0.000000),Vb=300.000000 (Potential memory leak).
+Warning in <TFile::Append>: Replacing existing TH1: V(t)-bl (0.000000,0.000000,0.000000),Vb=300.000000 (Potential memory leak).
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1
+Info in <Minuit2>: VariableMetricBuilder: no improvement in line search
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1
+Info in <Minuit2>: matrix forced pos-def by adding to diagonal : padd = 0.209185
+Info in <Minuit2>: MnHesse: matrix was forced pos. def. 
+Warning in <TH1::TH1>: nbins is <=0 - set to nbins = 1

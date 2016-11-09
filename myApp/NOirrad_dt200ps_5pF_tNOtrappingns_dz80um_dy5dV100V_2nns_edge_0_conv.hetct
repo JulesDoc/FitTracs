@@ -1,0 +1,59 @@
+================
+SSD simulation file
+version: 1.0
+================
+scanType: TRACS
+startTime: 2015-06-15_19-25
+landaLaser: 1064
+illumDirect: edge
+ampGain: 0
+fluence: 0
+annealing: 0
+numOfScans: 5
+temperatureMin: 27
+temperatureMax: 27
+deltaTemperature: 0
+nTemperature: 1
+temperatureVector: 27
+voltageMin: 300
+voltageMax: 300
+deltaVoltage: 0
+nVoltage: 1
+voltageVector: 300 
+pulsePowerIntensityMin: 60.000
+pulsePowerIntensityMax: 60.000
+deltaPulsePowerIntensity: 0
+nPulsePowerIntensity: 1
+pulsePowerIntensityVector: 60.000 
+pulseWidthMin: 0.000
+pulseWidthMax: 0.000
+deltaPulseWidth: 0
+nPulseWidth: 1
+pulseWidthVector: 0.000 
+xMin: 0.000
+xMax: 0.000
+deltaX: 0
+nX: 1
+yMin: 0.01
+yMax: 0.01
+deltaY: 0
+nY: 1
+yVector: 0.01 
+zMin: -0.01
+zMax: 0.31
+deltaZ: 0.08
+nZ: 5
+zVector: -0.01 0.07 0.15 0.23 0.31 
+At: 0.000000000200000
+Capacitance[F]: 0.000000000005000
+Bulk: p
+Implant: n
+NStrips: 2
+Pitch: 80
+Width: 25
+Depth: 300
+Vdep: 0
+Carriers File: etct.carriers
+================
+Nt T[C] Vset[V] x[mm] y[mm] z[mm] I(t)[A]
+================
