@@ -170,8 +170,8 @@ Capacitance = 5.e-12   # in Farad
 # more accurate the simulation will be; on the other hand, the coarser 
 # the time step, the faster the simulation will finish
 #TimeStep = 50.e-12   # in seconds 
-TimeStep = 200e-12   # in seconds 
-
+#TimeStep = 200e-12   # in seconds 
+TimeStep = 1e-09 # in seconds
 # Time elapsed from the start to the end of the simulation. As long as 
 # the whole signal is collected before the end of the simulation it has 
 # no effect of the results
@@ -348,7 +348,7 @@ NeffParametrization = Trilinear
 #y2 = 0.22;
 #y3 = 33.; #--> NOirrad_dt100ps_5pF_tNOtrappingns_dz80um_dy5dV100V_2nns_edge_0_noconv.Zscan.root
 
-y0 = -10.; 
+y0 = -15.; 
 y1 = 0.02  ; 
 y2 = 0.22  ; 
 y3 = 10. ;

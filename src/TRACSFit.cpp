@@ -235,8 +235,8 @@ Double_t TRACSFit::LeastSquares( ) {
 		for ( Int_t iv = iminm ; iv< imaxm ; iv++ ) {
 			simulation = itp1.Eval(timem[iv]);
 			//std::cout << "Scan="<<ii<<" Iteration= "<<iv<<" m=" << voltm[iv] << " s=" << simulation << " X2=" << chi2 << std::endl;
-			//chi2+=( voltm[iv]-simulation )*(voltm[iv]-simulation)/(0.1e-6*0.1e-6);
-			chi2+=( voltm[iv]-simulation )*(voltm[iv]-simulation);
+			chi2+=( voltm[iv]-simulation )*(voltm[iv]-simulation)/(0.1e-4*0.1e-4);
+			//chi2+=( voltm[iv]-simulation )*(voltm[iv]-simulation);
 		}
 
 

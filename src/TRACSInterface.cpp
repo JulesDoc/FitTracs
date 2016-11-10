@@ -472,9 +472,9 @@ void TRACSInterface::loop_on(int tid)
 	for (uint vPos = 0; vPos < n_vSteps + 1; vPos++)
 	{
 		detector->set_voltages(voltages[vPos], vDepletion);
-		//mtx2.lock();
+		mtx2.lock();
 		calculate_fields();
-		//mtx2.unlock();
+		mtx2.unlock();
 		/*for (params[1] = 0; params[1] < n_par1 + 1; params[1]++)*/
 		for (uint yPos = 0; yPos < n_ySteps + 1; yPos++)
 		{
@@ -500,9 +500,9 @@ void TRACSInterface::loop_on(int tid)
 				//Filling histograms-------> commented for Fitting
 				//i_ramo = GetItRamo();
 				//i_ramo_array[tid][zPos] = i_ramo; // for output
-				i_ramo = NULL;
+				//i_ramo = NULL;
 				//i_rc = GetItRc();
-				//i_rc_array[tid][zPos] = i_rc; // for output
+				i_rc_array[tid][zPos] = i_rc; // for output
 
 				//Check this: Pbm with TFile opened many times. Commented 8.11.2016 cause we don't need conv for the moment
 				//mtx2.lock();
@@ -536,14 +536,14 @@ void TRACSInterface::write_header(int tid)
 	aux_ysh = y_shifts;
 	std::transform(aux_ysh.begin(), aux_ysh.end(), aux_ysh.begin(), std::bind1st(std::multiplies<double>(),(1./1000.)));
 	// filename for data analysis
-	hetct_conv_filename = start+"_dt"+dtime+"ps_"+cap+"pF_t"+trap+"ns_dz"+stepZ+"um_dy"+stepY+"dV"+stepV+"V_"+neigh+"nns_"+scanType+"_"+std::to_string(tcount)+"_conv.hetct";
-	hetct_noconv_filename = start+"_dt"+dtime+"ps_"+cap+"pF_t"+trap+"ns_dz"+stepZ+"um_dy"+stepY+"dV"+stepV+"V_"+neigh+"nns_"+scanType+"_"+std::to_string(tcount)+"_noconv.hetct";
+	//hetct_conv_filename = start+"_dt"+dtime+"ps_"+cap+"pF_t"+trap+"ns_dz"+stepZ+"um_dy"+stepY+"dV"+stepV+"V_"+neigh+"nns_"+scanType+"_"+std::to_string(tcount)+"_conv.hetct";
+	//hetct_noconv_filename = start+"_dt"+dtime+"ps_"+cap+"pF_t"+trap+"ns_dz"+stepZ+"um_dy"+stepY+"dV"+stepV+"V_"+neigh+"nns_"+scanType+"_"+std::to_string(tcount)+"_noconv.hetct";
 	hetct_rc_filename = start+"_dt"+dtime+"ps_"+cap+"pF_t"+trap+"ns_dz"+stepZ+"um_dy"+stepY+"dV"+stepV+"V_"+neigh+"nns_"+scanType+"_"+std::to_string(tcount)+"_rc.hetct";
 
 
 	// write header for data analysis
-	utilities::write_to_hetct_header(hetct_conv_filename, detector, C, dt, aux_ysh, aux_zsh, waveLength, scanType, carrierFile, voltages);
-	utilities::write_to_hetct_header(hetct_noconv_filename, detector, C, dt, aux_ysh, aux_zsh, waveLength, scanType, carrierFile, voltages);
+	//utilities::write_to_hetct_header(hetct_conv_filename, detector, C, dt, aux_ysh, aux_zsh, waveLength, scanType, carrierFile, voltages);
+	//utilities::write_to_hetct_header(hetct_noconv_filename, detector, C, dt, aux_ysh, aux_zsh, waveLength, scanType, carrierFile, voltages);
 	utilities::write_to_hetct_header(hetct_rc_filename, detector, C, dt, aux_ysh, aux_zsh, waveLength, scanType, carrierFile, voltages);
 
 }
@@ -595,8 +595,8 @@ void TRACSInterface::write_to_file(int tid)
 			{
 				for (params[0] = 0; params[0] < i_ramo_array[i].size(); params[0]++)
 				{
-					utilities::write_to_file_row(hetct_noconv_filename, i_ramo_array[i][params[0]], detector->get_temperature(), y_shifts[params[1]], z_shifts_array[i][params[0]], voltages[params[2]]);
-					utilities::write_to_file_row(hetct_conv_filename, i_conv_array[i][params[0]], detector->get_temperature(), y_shifts[params[1]], z_shifts_array[i][params[0]], voltages[params[2]]);
+					//utilities::write_to_file_row(hetct_noconv_filename, i_ramo_array[i][params[0]], detector->get_temperature(), y_shifts[params[1]], z_shifts_array[i][params[0]], voltages[params[2]]);
+					//utilities::write_to_file_row(hetct_conv_filename, i_conv_array[i][params[0]], detector->get_temperature(), y_shifts[params[1]], z_shifts_array[i][params[0]], voltages[params[2]]);
 					utilities::write_to_file_row(hetct_rc_filename, i_rc_array[i][params[0]], detector->get_temperature(), y_shifts[params[1]], z_shifts_array[i][params[0]], voltages[params[2]]);
 
 				}

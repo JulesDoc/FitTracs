@@ -27,13 +27,12 @@ void call_from_thread(int tid) {
 	}
 	std::cout << "Thread with tid " << tid << " is OUTSIDE the critical section "<< std::endl;
 	mtx.unlock();
-
-	std::cout << "Thread with tid " << tid << " simulating ramo current - drifting "<< std::endl;
+    std::cout << "Thread with tid " << tid << " simulating ramo current - drifting "<< std::endl;
 	TRACSsim[tid]->loop_on(tid);
 
 }
 
-void call_from_thread_NoLoop(int tid, const std::vector<Double_t>& par) {
+void call_from_thread_NeffPar(int tid, const std::vector<Double_t>& par) {
 	// every thread instantiates a new TRACSInterface object
 	//extern std::vector<TRACSInterface*> TRACSsim;
 

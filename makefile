@@ -62,10 +62,24 @@ SRCS = $(SDIR)DoTRACSFit.cpp $(SDIR)TRACSFit.cpp $(SDIR)CarrierCollection.cpp $(
 
 ODIR = obj/
 OBJ_ = DoTRACSFit.o TRACSFit.o CarrierCollection.o Carrier.o CarrierMobility.o CarrierTransport.o global.o SMSDetector.o SMSDSubDomains.o threading.o TRACSInterface.o H1DConvolution.o utilities.o TMeas.o TWaveform.o TMeasHeader.o TMeasDict.o TMeasHeaderDict.o TWaveDict.o
-OBJ := $(patsubst %,$(ODIR)%,$(OBJ_))
+OBJB_ = DoTracsOnly.o TRACSFit.o CarrierCollection.o Carrier.o CarrierMobility.o CarrierTransport.o global.o SMSDetector.o SMSDSubDomains.o threading.o TRACSInterface.o H1DConvolution.o utilities.o TMeas.o TWaveform.o TMeasHeader.o TMeasDict.o TMeasHeaderDict.o TWaveDict.o
+OBJC_ = mfgTRACSFit.o TRACSFit.o CarrierCollection.o Carrier.o CarrierMobility.o CarrierTransport.o global.o SMSDetector.o SMSDSubDomains.o threading.o TRACSInterface.o H1DConvolution.o utilities.o TMeas.o TWaveform.o TMeasHeader.o TMeasDict.o TMeasHeaderDict.o TWaveDict.o
+OBJEDGE_ = edge_tree.o TMeas.o TWaveform.o TMeasHeader.o TMeasDict.o TMeasHeaderDict.o TWaveDict.o
 
+OBJ := $(patsubst %,$(ODIR)%,$(OBJ_))
+OBJB := $(patsubst %,$(ODIR)%,$(OBJB_))
+OBJC := $(patsubst %,$(ODIR)%,$(OBJC_))
+OBJEDGE := $(patsubst %,$(ODIR)%,$(OBJEDGE_))
+
+all: DoTRACSFit DoTracsOnly mfgTRACSFit edge_tree
 
 MAIN = DoTRACSFit
+
+MAINB = DoTracsOnly
+
+MAINC = mfgTRACSFit
+
+EDGE = edge_tree
 
 DoTRACSFit: $(OBJ)
 	@echo +++Compilation OK!
@@ -73,13 +87,49 @@ DoTRACSFit: $(OBJ)
 	@$(CC) $(CFLAGS) $(INCLUDES) -o myApp/$(MAIN) $(OBJ) $(LFLAGS) $(LIBS)
 	@$(BUILD_CMD)
 	@echo +++Building SUCCESSFUL!
+	
+DoTracsOnly: $(OBJB)
+	@echo +++Compilation OK!
+	@echo +++Linking in progress...
+	@$(CC) $(CFLAGS) $(INCLUDES) -o myApp/$(MAINB) $(OBJB) $(LFLAGS) $(LIBS)
+	@$(BUILD_CMD)
+	@echo +++Building SUCCESSFUL!
 
+mfgTRACSFit: $(OBJC)
+	@echo +++Compilation OK!
+	@echo +++Linking in progress...
+	@$(CC) $(CFLAGS) $(INCLUDES) -o myApp/$(MAINC) $(OBJC) $(LFLAGS) $(LIBS)
+	@$(BUILD_CMD)
+	@echo +++Building SUCCESSFUL!
+	
+edge_tree: $(OBJEDGE)
+	@echo +++Compilation OK!
+	@echo +++Linking in progress...
+	@$(CC) $(CFLAGS) $(INCLUDES) -o myApp/$(EDGE) $(OBJEDGE) $(LFLAGS) $(LIBS)
+	@$(BUILD_CMD)
+	@echo +++Building SUCCESSFUL!
+	
 
 $(ODIR)DoTRACSFit.o: src/DoTRACSFit.cpp
 	@$(PRINT)
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)DoTRACSFit.cpp -o $@
 	@$(BUILD_CMD)
+	
+$(ODIR)DoTracsOnly.o: src/DoTracsOnly.cpp
+	@$(PRINT)
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)DoTracsOnly.cpp -o $@
+	@$(BUILD_CMD)
 
+$(ODIR)mfgTRACSFit.o: src/mfgTRACSFit.cpp
+	@$(PRINT)
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)mfgTRACSFit.cpp -o $@
+	@$(BUILD_CMD)
+	
+$(ODIR)edge_tree.o: src/edge_tree.cpp
+	@$(PRINT)
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)edge_tree.cpp -o $@
+	@$(BUILD_CMD)
+	
 $(ODIR)TRACSFit.o: $(SDIR)TRACSFit.cpp
 	@$(PRINT)
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)TRACSFit.cpp -o $@ 
@@ -208,7 +258,7 @@ $(ODIR)TWaveDict.o: $(SDIR)TWaveDict.C
 #	$(CC) $(CFLAGS) $(INCLUDES) -c "$<"  -o "$@"
 
 clean:
-	@$(RM) $(ODIR)*.o *~ myApp/$(MAIN)
+	@$(RM) $(ODIR)*.o *~ myApp/$(MAIN) *~ myApp/$(MAINB) *~ myApp/$(MAINC) *~ myApp/$(EDGE)
 	@$(RM) $(SDIR)TMeasDict.C $(SDIR)TMeasHeaderDict.C $(SDIR)TWaveDict.C
 	@$(RM) $(SDIR)*.pcm
 	@$(BUILD_CMD)

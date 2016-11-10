@@ -375,5 +375,8 @@ minimum internal covariance matrix: LASymMatrix parameters:
 
 ==============================================================================================================================================================
 
+[0] Tolerance=1	weight=1		chi2: 9.264934663235e-11 edm=1e-22  ---> Convergence, bad values
+[Sim1] Tolerance=0.1	weight=1e-3*1e-3	chi2: 0.002896493511015	 edm: 8.855350328602e-05-->Convergence (-16,62)
+[Sim2] Tolerance=0.1	weight=1e-4*1e-4
 
 

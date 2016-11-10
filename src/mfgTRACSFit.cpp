@@ -14,9 +14,11 @@
 #include <Minuit2/MnMigrad.h>
 #include <Minuit2/MnMinos.h>
 #include <Minuit2/MnSimplex.h>
+#include <Minuit2/MnStrategy.h>
 #include <Minuit2/MnPlot.h>
 #include <Minuit2/MinosError.h>
 #include <Minuit2/FCNBase.h>
+#include <Math/MinimizerOptions.h>
 
 #include <boost/asio.hpp>
 
@@ -64,7 +66,7 @@ int main( int argc, char *argv[]) {
     vector<Double_t> parIni = TRACSsim[0]->get_NeffParam();
     Int_t nNeff = parIni.size() ;
 
-    vector<Double_t> parErr(nNeff, 1.) ;
+    vector<Double_t> parErr(nNeff, 1000.) ;
 
     //Pass parameters to Minuit
     MnUserParameters upar(parIni,parErr) ;
@@ -85,20 +87,23 @@ int main( int argc, char *argv[]) {
 
     //Do the minimization
 
-    MnMigrad mn( *fit , upar ) ;
+    ROOT::Math::MinimizerOptions::SetDefaultPrintLevel(1);    
+    ROOT::Math::MinimizerOptions::SetDefaultTolerance(0.1);    
+    MnMigrad mn( *fit , upar , MnStrategy(0)) ;
     FunctionMinimum min = mn() ;
 
     //Status report
-    if (min.IsValid()) std::cout << "Fit success"         << std::endl ;
-    else               std::cout << "Fit failed"   << std::endl ;
     std::cout << "Total time: " << total_timeTaken.total_seconds() << std::endl ;
     std::cout << "MINIMIZATION OUTCOME: " <<  min  << std::endl ;
  
-    //Release parameter 3 and 0, minimize again
-    upar.SetValue(0, min.UserState().Value(0) ) ;
-    upar.SetValue(3, min.UserState().Value(3) ) ;
-    upar.Release(0) ; upar.Release(3) ;
-    MnMigrad mnr( *fit , upar ) ;
+    //Release parameter 3, fix 0, minimize again
+    upar.SetValue(3, min.UserState().Value(3) ) ; upar.SetError(3, min.UserState().Error(3)) ; upar.Fix(3) ; 
+    upar.Release(0) ; upar.SetError(0,1000.);
+
+    std::cout << "=============================================" << std::endl;
+    std::cout<<"Second Minimization: "<<upar<<std::endl;
+    std::cout << "=============================================" << std::endl;
+    MnMigrad mnr( *fit , upar , MnStrategy(0)) ;
     min = mnr() ;
 
     //Status report
@@ -107,7 +112,22 @@ int main( int argc, char *argv[]) {
     std::cout << "Total time: " << total_timeTaken.total_seconds() << std::endl ;
     std::cout << "MINIMIZATION OUTCOME: " <<  min  << std::endl ;
 
-    //Get the fitting parameters
+    //Release parameter 3, fix 0, minimize again
+    for ( int i=0 ; i < nNeff ; i++ ) { upar.Release(i) ; upar.SetError(i,100.); }
+
+    std::cout << "=============================================" << std::endl;
+    std::cout<<"All par free: "<<upar<<std::endl;
+    std::cout << "=============================================" << std::endl;
+    MnMigrad mn3( *fit , upar , MnStrategy(0)) ;
+    min = mn3() ;
+
+    //Status report
+    if (min.IsValid()) std::cout << "Fit success"         << std::endl ;
+    else               std::cout << "Fit failed"   << std::endl ;
+    std::cout << "Total time: " << total_timeTaken.total_seconds() << std::endl ;
+    std::cout << "MINIMIZATION OUTCOME: " <<  min  << std::endl ;
+
+   //Get the fitting parameters
     for (Int_t i=0; i<parIni.size();i++) {
       parIni[i]=min.UserState().Value(i);
       parErr[i]=min.UserState().Error(i);
