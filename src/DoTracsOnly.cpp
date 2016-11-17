@@ -42,10 +42,16 @@ int main( int argc, char *argv[]) {
 
 	TRACSsim.resize(num_threads);
 	t.resize(num_threads);
-	for (uint i = 0; i < num_threads; ++i) {
+	t[0] = std::thread(call_from_thread, 0);
+	t[0].join();
+
+
+	TRACSsim.resize(num_threads);
+	t.resize(num_threads);
+	for (uint i = 1; i < num_threads; ++i) {
 		t[i] = std::thread(call_from_thread, i);
 	}
-	for (int i = 0; i < num_threads; ++i) {
+	for (int i = 1; i < num_threads; ++i) {
 		t[i].join();
 	}
 

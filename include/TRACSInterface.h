@@ -64,6 +64,8 @@ private:
 	double vDepletion;
 	double zPos;
 	double yPos;
+	double tolerance;
+	double chiFinal;
 
 	int nThreads;
 	int nns;
@@ -159,10 +161,17 @@ public:
 	TH1D *GetItRc();
 	TH1D *GetItConv();
 	std::vector<double> get_NeffParam(); //Returns Neff parametrization
-	int GetnSteps(){
+	inline int GetnSteps(){
 		return n_tSteps;
 	}
 
+	inline double GetTolerance(){
+			return tolerance;
+	}
+
+	inline double GetchiFinal(){
+			return chiFinal;
+	}
 
 	//Tree functions
 	//friend TTree * GetTree(); //Returns the pointer to the TRACS simulated tree

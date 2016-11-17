@@ -5,7 +5,7 @@
 #include <valarray>
 #include <mutex>
 
-#include <TH1D.h> // 1 Dimesional ROOT histogram 
+#include <TH1D.h> // 1 Dimensional ROOT histogram
 
 
 extern std::vector<std::vector <TH1D*> >  i_ramo_array, i_conv_array, i_rc_array;

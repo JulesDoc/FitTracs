@@ -26,6 +26,7 @@
 #include <TRACSInterface.h>
 #include <TString.h>
 #include <stdio.h>
+#include <global.h>
 
 std::vector<TRACSInterface*> TRACSsim;
 std::vector<std::thread> t;
@@ -45,6 +46,8 @@ int main( int argc, char *argv[]) {
 
     //Configuration file
     TString FileConf = TString( argv[3] ) ;
+    std::string lfnm(argv[3]) ;
+    fnm = lfnm;
 
     //Restrictions for fits
     TString how="";
@@ -52,10 +55,15 @@ int main( int argc, char *argv[]) {
 
     TRACSsim.resize(num_threads);
     t.resize(num_threads);
-    for (uint i = 0; i < num_threads; ++i) {
+    t[0] = std::thread(call_from_thread, 0);
+    t[0].join();
+
+    TRACSsim.resize(num_threads);
+    t.resize(num_threads);
+    for (uint i = 1; i < num_threads; ++i) {
     	t[i] = std::thread(call_from_thread, i);
     }
-    for (int i = 0; i < num_threads; ++i) {
+    for (int i = 1; i < num_threads; ++i) {
     	t[i].join();
     }
 
@@ -66,7 +74,7 @@ int main( int argc, char *argv[]) {
     vector<Double_t> parIni = TRACSsim[0]->get_NeffParam();
     Int_t nNeff = parIni.size() ;
 
-    vector<Double_t> parErr(nNeff, 1000.) ;
+    vector<Double_t> parErr(nNeff, 60.) ;
 
     //Pass parameters to Minuit
     MnUserParameters upar(parIni,parErr) ;
@@ -84,11 +92,17 @@ int main( int argc, char *argv[]) {
     std::cout << "=============================================" << std::endl;
     std::cout<<"Initial parameters: "<<upar<<std::endl;
     std::cout << "=============================================" << std::endl;
+    std::cout << "=============================================" << std::endl;
+    std::cout << "tolerance= " << TRACSsim[0]->GetTolerance()    << std::endl;
+    std::cout << "chiFinal= " << TRACSsim[0]->GetchiFinal()      << std::endl;
+    std::cout << "=============================================" << std::endl;
+    std::cout << "=============================================" << std::endl;
+
 
     //Do the minimization
 
     ROOT::Math::MinimizerOptions::SetDefaultPrintLevel(1);    
-    ROOT::Math::MinimizerOptions::SetDefaultTolerance(0.1);    
+    ROOT::Math::MinimizerOptions::SetDefaultTolerance(TRACSsim[0]->GetTolerance());
     MnMigrad mn( *fit , upar , MnStrategy(0)) ;
     FunctionMinimum min = mn() ;
 
@@ -98,7 +112,7 @@ int main( int argc, char *argv[]) {
  
     //Release parameter 3, fix 0, minimize again
     upar.SetValue(3, min.UserState().Value(3) ) ; upar.SetError(3, min.UserState().Error(3)) ; upar.Fix(3) ; 
-    upar.Release(0) ; upar.SetError(0,1000.);
+    upar.Release(0) ; upar.SetError(0,60.);
 
     std::cout << "=============================================" << std::endl;
     std::cout<<"Second Minimization: "<<upar<<std::endl;
@@ -113,7 +127,7 @@ int main( int argc, char *argv[]) {
     std::cout << "MINIMIZATION OUTCOME: " <<  min  << std::endl ;
 
     //Release parameter 3, fix 0, minimize again
-    for ( int i=0 ; i < nNeff ; i++ ) { upar.Release(i) ; upar.SetError(i,100.); }
+    for ( int i=0 ; i < 4 ; i++ ) { upar.Release(i) ; upar.SetError(i,60.); }
 
     std::cout << "=============================================" << std::endl;
     std::cout<<"All par free: "<<upar<<std::endl;
