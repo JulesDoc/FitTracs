@@ -27,6 +27,8 @@ class JacoboniMobility
 		JacoboniMobility();
     ~JacoboniMobility();
     double obtain_mobility(double e_field_mod);
+    double obtain_mu0();
+
 };
 
 #endif // CARRIERMOBILITY_H

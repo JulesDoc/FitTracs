@@ -372,7 +372,7 @@ std::string utilities::vector_to_string(std::vector<double> input_list)
 void utilities::parse_config_file(std::string fileName, std::string &carrierFile, double &depth, double &width, double &pitch, int &nns, double &temp, double &trapping, double &fluence,
 		int &nThreads, int &n_cells_x, int &n_cells_y, char &bulk_type, char &implant_type, int &waveLength, std::string &scanType, double &C, double &dt, double &max_time,
 		double &v_init, double &deltaV, double &v_max, double &v_depletion, double &zInit, double &zMax, double &deltaZ, double &yInit, double &yMax, double &deltaY,
-		std::vector<double> &neff_param, std::string &neffType, double &tolerance, double &chiFinal)
+		std::vector<double> &neff_param, std::string &neffType, double &tolerance, double &chiFinal, int &diffusion)
 {
 	// Creat map to hold all values as strings 
 	std::map< std::string, std::string> valuesMap;
@@ -659,6 +659,13 @@ void utilities::parse_config_file(std::string fileName, std::string &carrierFile
 	tempString = std::string("chiFinal");
 	converter << valuesMap[tempString];
 	converter >> chiFinal;
+	converter.clear();
+	converter.str("");
+	tempString = std::string("");
+
+	tempString = std::string("diffusion");
+	converter << valuesMap[tempString];
+	converter >> diffusion;
 	converter.clear();
 	converter.str("");
 	tempString = std::string("");

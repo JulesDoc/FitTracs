@@ -29,7 +29,10 @@ class SMSDetector
     char _implant_type; // n or p
 	std::string _neff_type;
 	std::vector<double> _neff_param; // Neff parametrization
-		double _vdep; // depletion voltage
+	double _vdep; // depletion voltage
+	int _diffusion; //If diffusion is ON by user. 0 for NO, 1 for YES
+	double depletion_width;
+
 
     // some useful derived variables
     double _x_min; // in microns
@@ -77,7 +80,8 @@ class SMSDetector
 
   public:
     // default constructor and destructor
-    SMSDetector(double pitch, double width, double depth, int nns, char bulk_type, char implant_type, int n_cells_x = 100, int n_cells_y = 100, double tempK = 253., double trapping = 9e300, double fluence = 0.0, std::vector<double> neff_param = {0}, std::string neff_type = "Trilinear");
+    SMSDetector(double pitch, double width, double depth, int nns, char bulk_type, char implant_type, int n_cells_x = 100, int n_cells_y = 100, double tempK = 253., double trapping = 9e300,
+    		double fluence = 0.0, std::vector<double> neff_param = {0}, std::string neff_type = "Trilinear", int diffusion = 0);
     ~SMSDetector();
     // set methods
     void set_voltages(double v_bias, double v_depletion);
@@ -122,6 +126,9 @@ class SMSDetector
 	char get_implant_type();
 	double get_vbias();
 	double get_vdep();
+	int diffusionON();
+	double get_neff();
+	double get_depletionWidth();
 
     // some other methods
     bool is_out(const std::array< double,2> &x);

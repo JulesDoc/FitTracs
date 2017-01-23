@@ -20,7 +20,8 @@ TRACSInterface::TRACSInterface(std::string filename)
 	//utilities::parse_config_file(filename, carrierFile, depth, width, pitch, nns, temp, trapping, fluence, n_cells_x, n_cells_y, bulk_type, implant_type,
 	//C, dt, max_time, vBias, vDepletion, zPos, yPos, neff_param, neffType);
 	utilities::parse_config_file(filename, carrierFile, depth, width,  pitch, nns, temp, trapping, fluence, nThreads, n_cells_x, n_cells_y, bulk_type,
-			implant_type, waveLength, scanType, C, dt, max_time, vInit, deltaV, vMax, vDepletion, zInit, zMax, deltaZ, yInit, yMax, deltaY, neff_param, neffType, tolerance, chiFinal);
+			implant_type, waveLength, scanType, C, dt, max_time, vInit, deltaV, vMax, vDepletion, zInit, zMax, deltaZ, yInit, yMax, deltaY, neff_param, neffType,
+			tolerance, chiFinal, diffusion);
 
 	// Initialize vectors / n_Steps / detector / set default zPos, yPos, vBias / carrier_collection 
 	if (fluence <= 0) // if no fluence -> no trapping
@@ -45,6 +46,7 @@ TRACSInterface::TRACSInterface(std::string filename)
 		std::cout << "No. of threads > No. of z points! reducing No. of threads to."<< num_threads << std::endl;
 		//exit(EXIT_FAILURE);
 	}
+	//std::cout << "Diffusion: "<< diffusion << std::endl;
 	n_zSteps_array = (int) std::floor ((n_zSteps+1) / num_threads);
 	n_zSteps_iter = (int) std::round ((n_zSteps+1) / (num_threads)*1.0);
 	n_vSteps = (int) std::floor((vMax-vInit)/deltaV);
@@ -62,7 +64,7 @@ TRACSInterface::TRACSInterface(std::string filename)
 
 	parameters["allow_extrapolation"] = true;
 
-	detector = new SMSDetector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType);
+	detector = new SMSDetector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType, diffusion);
 	//SMSDetector detector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType);
 	//detector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType);
 	//detector = new SMSDetector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType):
@@ -248,6 +250,9 @@ void TRACSInterface::simulate_ramo_current()
 	i_elec = 0;
 	i_total = 0;
 
+	//Important for Diffusion
+	//yPos is later transformed into X.
+	//zPos is later transformed into Y.
 	carrierCollection->simulate_drift( dt, max_time, yPos, zPos, i_elec, i_hole);
 	i_total = i_elec + i_hole;
 }
@@ -471,6 +476,7 @@ void TRACSInterface::loop_on(int tid)
 	/*for (params[2] = 0; params[2] < n_par2 + 1; params[2]++)*/
 	for (uint vPos = 0; vPos < n_vSteps + 1; vPos++)
 	{
+		//vPos = Voltage steps. Normally one step is used.
 		detector->set_voltages(voltages[vPos], vDepletion);
 		mtx2.lock();
 		calculate_fields();

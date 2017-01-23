@@ -10,7 +10,7 @@
 #include <TRACSInterface.h>
 
 extern std::vector<TRACSInterface*> TRACSsim;
-//This function will be called from a thread
+//This function will be called from a threadx
 void call_from_thread(int tid) {
 	// every thread instantiates a new TRACSInterface object
 

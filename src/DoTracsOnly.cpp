@@ -39,6 +39,10 @@ int main( int argc, char *argv[]) {
 
 		num_threads = 1;
 	}
+	numberDs = 0;
+
+	//This to fix the number of threads chosen by the user. It is possible that the number of threads launched do not match with the array of steps, then it breaks.
+	//It can be commented if the user want to control it by himself. When commented, start the thread loop from 0 instead of from 1!!.
 
 	TRACSsim.resize(num_threads);
 	t.resize(num_threads);
@@ -66,7 +70,7 @@ int main( int argc, char *argv[]) {
 	{
 		std::cout << neff_test[i] << std::endl;
 	}
-
+	std::cout << "numberDs: " << numberDs << std::endl;
 	//Clean
 	for (int i = 0; i < TRACSsim.size(); i++)	{
 		delete TRACSsim[i];

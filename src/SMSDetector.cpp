@@ -1,53 +1,56 @@
 #include <SMSDetector.h>
 #include <Source.h>
 
-SMSDetector::SMSDetector(double pitch, double width, double depth, int nns, char bulk_type, char implant_type, int n_cells_x, int n_cells_y, double tempK, double trapping, double fluence, std::vector<double> neff_param, std::string neff_type) :
-    
-    _pitch(pitch), //Distance between implants
-    _width(width), //Size of the implant
-    _depth(depth), //Vertical size of the pad (typically 300microns)
-    _tempK(tempK), // Temperature of the detector
-    _trapping_time(trapping), // Trapping constant simulates radiation-induced defects (traps)
-    _fluence(fluence), // Irradiation fluence in neutron equivalent (neq)
-    _nns(nns), // Number of neighbouring strips
-    _bulk_type(bulk_type), //Dopant type of the silicon (p/n)
-    _implant_type(implant_type), //Dopant type of the implant, normally opposite of the bulk (n/p)
-	_neff_type(neff_type), // Select aproach to parametrize Neff (irradiation only)
-    _neff_param(neff_param), // Parametrized description of the Space Charge distribution
-    _x_min(0.0), // Starting horizontal position for carrier generation (hereafter CG)
-    _x_max(_pitch * (2*_nns+1)), // Endingvertical positio for CG
-    _y_min(0.0), // Starting vertical position for CG (microns)
-    _y_max(_depth), // Ending vertical position for CG (microns)
-	_vdep(0),
-	_v_backplane(0),
-	_v_strips(0),
-	_f_poisson(0),
-    // Mesh properties
-    _n_cells_x(n_cells_x),
-    _n_cells_y(n_cells_y),
+SMSDetector::SMSDetector(double pitch, double width, double depth, int nns, char bulk_type, char implant_type, int n_cells_x, int n_cells_y, double tempK, double trapping,
+		double fluence, std::vector<double> neff_param, std::string neff_type, int diffusion) :
+
+		_pitch(pitch), //Distance between implants
+		_width(width), //Size of the implant
+		_depth(depth), //Vertical size of the pad (typically 300microns)
+		_tempK(tempK), // Temperature of the detector
+		_trapping_time(trapping), // Trapping constant simulates radiation-induced defects (traps)
+		_fluence(fluence), // Irradiation fluence in neutron equivalent (neq)
+		_nns(nns), // Number of neighbouring strips
+		_bulk_type(bulk_type), //Dopant type of the silicon (p/n)
+		_implant_type(implant_type), //Dopant type of the implant, normally opposite of the bulk (n/p)
+		_neff_type(neff_type), // Select aproach to parametrize Neff (irradiation only)
+		_neff_param(neff_param), // Parametrized description of the Space Charge distribution
+		_x_min(0.0), // Starting horizontal position for carrier generation (hereafter CG)
+		_x_max(_pitch * (2*_nns+1)), // Endingvertical positio for CG
+		_y_min(0.0), // Starting vertical position for CG (microns)
+		_y_max(_depth), // Ending vertical position for CG (microns)
+		_vdep(0),
+		_v_backplane(0),
+		_v_strips(0),
+		_f_poisson(0),
+		_diffusion(diffusion),
+		depletion_width(0.),
+		// Mesh properties
+		_n_cells_x(n_cells_x),
+		_n_cells_y(n_cells_y),
 #if DOLFIN_VERSION_MINOR>=6
-    _mesh(Point(_x_min,_y_min),Point(_x_max,_y_max), _n_cells_x, _n_cells_y),
+		_mesh(Point(_x_min,_y_min),Point(_x_max,_y_max), _n_cells_x, _n_cells_y),
 #else
-    _mesh(_x_min,_y_min,_x_max,_y_max, _n_cells_x, _n_cells_y),
+		_mesh(_x_min,_y_min,_x_max,_y_max, _n_cells_x, _n_cells_y),
 #endif
-    _periodic_boundary(_x_min, _x_max, _depth),
+		_periodic_boundary(_x_min, _x_max, _depth),
 
-    // More detector properties/parts
-    _central_strip(_pitch, _width, _nns),
-    _neighbour_strips(_pitch, _width, _nns),
-    _backplane(_x_min, _x_max, _depth), 
+		// More detector properties/parts
+		_central_strip(_pitch, _width, _nns),
+		_neighbour_strips(_pitch, _width, _nns),
+		_backplane(_x_min, _x_max, _depth),
 
-    // Functions & variables to solve the PDE
-    _V_p(_mesh, _periodic_boundary),
-    _a_p(_V_p, _V_p),
-    _L_p(_V_p),
-    _V_g(_mesh),
-    _a_g(_V_g, _V_g),
-    _L_g(_V_g),
-    _w_u(_V_p),
-    _d_u(_V_p),
-    _w_f_grad(_V_g), // Weighting field
-    _d_f_grad(_V_g)
+		// Functions & variables to solve the PDE
+		_V_p(_mesh, _periodic_boundary),
+		_a_p(_V_p, _V_p),
+		_L_p(_V_p),
+		_V_g(_mesh),
+		_a_g(_V_g, _V_g),
+		_L_g(_V_g),
+		_w_u(_V_p),
+		_d_u(_V_p),
+		_w_f_grad(_V_g), // Weighting field
+		_d_f_grad(_V_g)
 
 {
 }
@@ -58,10 +61,10 @@ SMSDetector::SMSDetector(double pitch, double width, double depth, int nns, char
 void SMSDetector::set_voltages(double v_bias, double v_depletion)
 {
 	_vdep = v_depletion; // Store depletion voltage
-  _v_strips = (_implant_type == 'n') ? v_bias : 0.0;
-  _v_backplane = (_implant_type == 'p') ? v_bias : 0.0;
-  // neff defined in F/microns
-  _f_poisson = ((_bulk_type== 'p') ? +1.0 : -1.0)*(-2.0*v_depletion)/(_depth*_depth);
+	_v_strips = (_implant_type == 'n') ? v_bias : 0.0;
+	_v_backplane = (_implant_type == 'p') ? v_bias : 0.0;
+	// neff defined in F/microns
+	_f_poisson = ((_bulk_type== 'p') ? +1.0 : -1.0)*(-2.0*v_depletion)/(_depth*_depth);
 }
 
 /*
@@ -70,25 +73,25 @@ void SMSDetector::set_voltages(double v_bias, double v_depletion)
 void SMSDetector::solve_w_u()
 {
 
-  // Solving Laplace equation f = 0
-  Constant f(0);
-  _L_p.f = f;
+	// Solving Laplace equation f = 0
+	Constant f(0);
+	_L_p.f = f;
 
-  // Set BC values
-  Constant central_strip_V(1.0);
-  Constant neighbour_strip_V(0.0);
-  Constant backplane_V(0.0);
-  // Set BC variables
-  DirichletBC central_strip_BC(_V_p, central_strip_V, _central_strip);
-  DirichletBC neighbour_strip_BC(_V_p, neighbour_strip_V, _neighbour_strips);
-  DirichletBC backplane_BC(_V_p, backplane_V, _backplane);
-  // Collect them
-  std::vector<const DirichletBC*> bcs;
-  bcs.push_back(&central_strip_BC);
-  bcs.push_back(&neighbour_strip_BC);
-  bcs.push_back(&backplane_BC);
+	// Set BC values
+	Constant central_strip_V(1.0);
+	Constant neighbour_strip_V(0.0);
+	Constant backplane_V(0.0);
+	// Set BC variables
+	DirichletBC central_strip_BC(_V_p, central_strip_V, _central_strip);
+	DirichletBC neighbour_strip_BC(_V_p, neighbour_strip_V, _neighbour_strips);
+	DirichletBC backplane_BC(_V_p, backplane_V, _backplane);
+	// Collect them
+	std::vector<const DirichletBC*> bcs;
+	bcs.push_back(&central_strip_BC);
+	bcs.push_back(&neighbour_strip_BC);
+	bcs.push_back(&backplane_BC);
 
-  solve(_a_p == _L_p , _w_u, bcs);
+	solve(_a_p == _L_p , _w_u, bcs);
 }
 
 /*
@@ -119,22 +122,22 @@ void SMSDetector::solve_d_u()
 		_L_p.f = f;
 	}
 
-	
-  // Set BC values
-  Constant central_strip_V(_v_strips);
-  Constant neighbour_strip_V(_v_strips);
-  Constant backplane_V(_v_backplane);
-  // Set BC variables
-  DirichletBC central_strip_BC(_V_p, central_strip_V, _central_strip);
-  DirichletBC neighbour_strip_BC(_V_p, neighbour_strip_V, _neighbour_strips);
-  DirichletBC backplane_BC(_V_p, backplane_V, _backplane);
-  // Collect them
-  std::vector<const DirichletBC*> bcs;
-  bcs.push_back(&central_strip_BC);
-  bcs.push_back(&neighbour_strip_BC);
-  bcs.push_back(&backplane_BC);
 
-  solve(_a_p == _L_p , _d_u, bcs);
+	// Set BC values
+	Constant central_strip_V(_v_strips);
+	Constant neighbour_strip_V(_v_strips);
+	Constant backplane_V(_v_backplane);
+	// Set BC variables
+	DirichletBC central_strip_BC(_V_p, central_strip_V, _central_strip);
+	DirichletBC neighbour_strip_BC(_V_p, neighbour_strip_V, _neighbour_strips);
+	DirichletBC backplane_BC(_V_p, backplane_V, _backplane);
+	// Collect them
+	std::vector<const DirichletBC*> bcs;
+	bcs.push_back(&central_strip_BC);
+	bcs.push_back(&neighbour_strip_BC);
+	bcs.push_back(&backplane_BC);
+
+	solve(_a_p == _L_p , _d_u, bcs);
 }
 
 /*
@@ -143,10 +146,10 @@ void SMSDetector::solve_d_u()
 void SMSDetector::solve_w_f_grad()
 {
 
-  _L_g.u = _w_u;
-  solve(_a_g == _L_g, _w_f_grad);
-  // Change sign E = - grad(u)
-  _w_f_grad = _w_f_grad * (-1.0);
+	_L_g.u = _w_u;
+	solve(_a_g == _L_g, _w_f_grad);
+	// Change sign E = - grad(u)
+	_w_f_grad = _w_f_grad * (-1.0);
 }
 
 /*
@@ -154,10 +157,10 @@ void SMSDetector::solve_w_f_grad()
  */
 void SMSDetector::solve_d_f_grad()
 {
-  _L_g.u = _d_u;
-  solve(_a_g == _L_g, _d_f_grad);
-  // Change sign E = - grad(u)
-  _d_f_grad = _d_f_grad * (-1.0);
+	_L_g.u = _d_u;
+	solve(_a_g == _L_g, _d_f_grad);
+	// Change sign E = - grad(u)
+	_d_f_grad = _d_f_grad * (-1.0);
 
 }
 
@@ -167,28 +170,28 @@ void SMSDetector::solve_d_f_grad()
  */
 bool SMSDetector::is_out(const std::array< double,2> &x)
 {
-  bool out = true;
-  if ( (x[0] > _x_min) && (x[0] < _x_max) && (x[1] > _y_min) && (x[1] < _y_max))
-  {
-    out = false;
-  }
-  return out;
+	bool out = true;
+	if ( (x[0] > _x_min) && (x[0] < _x_max) && (x[1] > _y_min) && (x[1] < _y_max))
+	{
+		out = false;
+	}
+	return out;
 }
 
 /************************************************************************
-*************************************************************************
-***                                                                   ***
-***           SETTERS AND GETTERS 						              ***
-***                                                                   ***
-*************************************************************************
-*************************************************************************/
+ *************************************************************************
+ ***                                                                   ***
+ ***           SETTERS AND GETTERS 						              ***
+ ***                                                                   ***
+ *************************************************************************
+ *************************************************************************/
 
 /*
  * Getter for the weighting potential
  */
 Function * SMSDetector::get_w_u()
 {
-  return &_w_u;
+	return &_w_u;
 }
 
 /*
@@ -229,7 +232,7 @@ RectangleMesh * SMSDetector::get_mesh()
  */
 double  SMSDetector::get_x_min()
 {
-  return _x_min;
+	return _x_min;
 }
 
 /*
@@ -237,14 +240,14 @@ double  SMSDetector::get_x_min()
  */
 double  SMSDetector::get_x_max()
 {
-  return _x_max;
+	return _x_max;
 }
 /*
  * Getter method for the temperature of the diode
  */
 double  SMSDetector::get_temperature()
 {
-  return _tempK;
+	return _tempK;
 }
 
 /*
@@ -252,7 +255,7 @@ double  SMSDetector::get_temperature()
  */
 double  SMSDetector::get_y_min()
 {
-  return _y_min;
+	return _y_min;
 }
 
 
@@ -261,7 +264,7 @@ double  SMSDetector::get_y_min()
  */
 double SMSDetector::get_y_max()
 {
-  return _y_max;
+	return _y_max;
 }
 
 /*
@@ -269,7 +272,7 @@ double SMSDetector::get_y_max()
  */
 double SMSDetector::get_trapping_time()
 {
-  return _trapping_time;
+	return _trapping_time;
 }
 
 /*
@@ -277,7 +280,7 @@ double SMSDetector::get_trapping_time()
  */
 double SMSDetector::get_fluence()
 {
-  return _fluence;
+	return _fluence;
 }
 
 /*
@@ -285,7 +288,7 @@ double SMSDetector::get_fluence()
  */
 double SMSDetector::get_depth()
 {
-  return _depth;
+	return _depth;
 }
 
 /*
@@ -293,7 +296,7 @@ double SMSDetector::get_depth()
  */
 double SMSDetector::get_pitch()
 {
-  return _pitch;
+	return _pitch;
 }
 
 /*
@@ -301,7 +304,7 @@ double SMSDetector::get_pitch()
  */
 double SMSDetector::get_width()
 {
-  return _width;
+	return _width;
 }
 
 /*
@@ -309,7 +312,7 @@ double SMSDetector::get_width()
  */
 int SMSDetector::get_nns()
 {
-  return _nns;
+	return _nns;
 }
 
 /*
@@ -317,7 +320,7 @@ int SMSDetector::get_nns()
  */
 char SMSDetector::get_bulk_type()
 {
-  return _bulk_type;
+	return _bulk_type;
 }
 
 /*
@@ -325,7 +328,7 @@ char SMSDetector::get_bulk_type()
  */
 char SMSDetector::get_implant_type()
 {
-  return _implant_type;
+	return _implant_type;
 }
 
 /*
@@ -333,18 +336,31 @@ char SMSDetector::get_implant_type()
  */
 double SMSDetector::get_vbias()
 {
-  return _v_strips-_v_backplane;
+	return _v_strips-_v_backplane;
 }
-
-
 /*
  * Getter for the depletion voltage
  */
 double SMSDetector::get_vdep()
 {
-  return _vdep;
+	return _vdep;
 }
 
+int SMSDetector::diffusionON()
+{
+	return _diffusion;
+}
+
+double SMSDetector::get_neff(){
+
+	return _f_poisson;
+}
+
+double SMSDetector::get_depletionWidth(){
+
+	depletion_width = _depth * sqrt((_v_strips-_v_backplane)/_vdep);
+	return depletion_width;
+}
 ///////////////////////SETTERS//////////////////////////////////
 
 /*
@@ -352,7 +368,7 @@ double SMSDetector::get_vdep()
  */
 void SMSDetector::set_pitch(double pitch)
 {
-  _pitch = pitch;
+	_pitch = pitch;
 }
 
 /*
@@ -360,7 +376,7 @@ void SMSDetector::set_pitch(double pitch)
  */
 void SMSDetector::set_width(double width)
 {
-  _width = width;
+	_width = width;
 }
 
 /*
@@ -368,7 +384,7 @@ void SMSDetector::set_width(double width)
  */
 void SMSDetector::set_depth(double depth)
 {
-  _depth = depth;
+	_depth = depth;
 }
 
 /*
@@ -376,7 +392,7 @@ void SMSDetector::set_depth(double depth)
  */
 void SMSDetector::set_nns(int nns)
 {
-  _nns = nns;
+	_nns = nns;
 }
 
 /*
@@ -384,7 +400,7 @@ void SMSDetector::set_nns(int nns)
  */
 void SMSDetector::set_bulk_type(char bulk_type)
 {
-  _bulk_type = bulk_type;
+	_bulk_type = bulk_type;
 }
 
 /*
@@ -392,7 +408,7 @@ void SMSDetector::set_bulk_type(char bulk_type)
  */
 void SMSDetector::set_implant_type(char implant_type)
 {
-  _implant_type = implant_type;
+	_implant_type = implant_type;
 }
 
 /*
@@ -400,7 +416,7 @@ void SMSDetector::set_implant_type(char implant_type)
  */
 void SMSDetector::set_n_cells_x(int n_cells_x)
 {
-  _n_cells_x = n_cells_x;
+	_n_cells_x = n_cells_x;
 }
 
 /*
@@ -408,7 +424,7 @@ void SMSDetector::set_n_cells_x(int n_cells_x)
  */
 void SMSDetector::set_n_cells_y(int n_cells_y)
 {
-  _n_cells_y  = n_cells_y;
+	_n_cells_y  = n_cells_y;
 }
 
 /*
@@ -416,7 +432,7 @@ void SMSDetector::set_n_cells_y(int n_cells_y)
  */
 void SMSDetector::set_temperature(double temperature)
 {
-  _tempK = temperature;
+	_tempK = temperature;
 }
 
 /*
@@ -424,7 +440,7 @@ void SMSDetector::set_temperature(double temperature)
  */
 void SMSDetector::set_trapping_time(double trapping_tau)
 {
-  _trapping_time = trapping_tau;
+	_trapping_time = trapping_tau;
 }
 
 /*
@@ -432,22 +448,23 @@ void SMSDetector::set_trapping_time(double trapping_tau)
  */
 void SMSDetector::set_fluence(double fluencia)
 {
-  _fluence = fluencia;
+	_fluence = fluencia;
 }
+
 
 /*
  * Setter for changing the space charge distribution
  */
 void SMSDetector::set_neff_param(std::vector<double> neff_parameters)
 {
-  _neff_param[0] = neff_parameters[0]; // y0
-  _neff_param[1] = neff_parameters[1]; // y1
-  _neff_param[2] = neff_parameters[2]; // y2
-  _neff_param[3] = neff_parameters[3]; // y3
-  _neff_param[4] = 0.0; // z0
-  _neff_param[5] = neff_parameters[5]; // z1
-  _neff_param[6] = neff_parameters[6]; // z2
-  _neff_param[7] = _depth; // z3
+	_neff_param[0] = neff_parameters[0]; // y0
+	_neff_param[1] = neff_parameters[1]; // y1
+	_neff_param[2] = neff_parameters[2]; // y2
+	_neff_param[3] = neff_parameters[3]; // y3
+	_neff_param[4] = 0.0; // z0
+	_neff_param[5] = neff_parameters[5]; // z1
+	_neff_param[6] = neff_parameters[6]; // z2
+	_neff_param[7] = _depth; // z3
 }
 
 void SMSDetector::set_neff_type(std::string newApproach)

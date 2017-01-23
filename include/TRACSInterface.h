@@ -66,6 +66,7 @@ private:
 	double yPos;
 	double tolerance;
 	double chiFinal;
+	int diffusion;
 
 	int nThreads;
 	int nns;

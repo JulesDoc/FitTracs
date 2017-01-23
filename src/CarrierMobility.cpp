@@ -25,7 +25,7 @@ JacoboniMobility::JacoboniMobility( char carrier_type, double T)
   _T = T;
   if (carrier_type == 'e') // Electrons
   {
-    _mu0 = 1440.e8*std::pow(_T/300., -2.260);
+    _mu0 = 1440.e8 * std::pow(_T/300., -2.260);
     _vsat = 1.054e11  * std::pow(_T/300., -0.602);
     _beta = 0.992 * std::pow(_T/300., 0.572); // <100> orientation
   }
@@ -48,6 +48,11 @@ JacoboniMobility::JacoboniMobility( char carrier_type, double T)
 double JacoboniMobility::obtain_mobility(double e_field_mod)
 {
   return _mu0/std::pow(1.0+std::pow(_mu0*e_field_mod/_vsat,_beta), 1.0/_beta); // mum**2/ Vs
+}
+double JacoboniMobility::obtain_mu0(){
+
+  return _mu0;
+
 }
 
 JacoboniMobility::~JacoboniMobility()

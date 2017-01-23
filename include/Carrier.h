@@ -7,9 +7,12 @@
 #ifndef Q_MOC_RUN  // See: https://bugreports.qt-project.org/browse/QTBUG-22829
 #include <boost/numeric/odeint/stepper/runge_kutta4.hpp>
 #endif
+#include <TRandom3.h>
 
 #include <CarrierTransport.h>
 #include <SMSDetector.h>
+#include <Constants.h>
+#include <global.h>
 
 using namespace boost::numeric::odeint;
 //using namespace dolfin;
@@ -27,9 +30,14 @@ using namespace boost::numeric::odeint;
 
 class Carrier
 {
+	//It is not very clear why, but this class does not accept more variables.
+	//The size is limited somewhere by someone, maybe the carrier vector list is touching the maximum space of the program's stack...
   private:
+
     char _carrier_type;
     double _q; // charge
+    double _dy;
+    double _dx; //to calculate diffusion step
     double _gen_time; // instant of generation of the carrier
     std::array< double,2> _x; // carrier position array
     std::array< double,2> _e_field; // electric field at the carrier position
@@ -37,14 +45,14 @@ class Carrier
     double _e_field_mod;
     int _sign; // sign to describe if carrier moves in e field direction or opposite
 	mutable std::mutex safeRead;
-
     SMSDetector * _detector;
     double _myTemp; // Temperature of the detector
     DriftTransport _drift;
     JacoboniMobility _mu;
     double _trapping_time;
-//		Function _electricField;
-//		Function _weightingField;
+    double diffDistance;
+    //double _numberDs;
+    TRandom3 gRandom;
 
   public:
     Carrier( char carrier_type, double q, double x_init, double y_init, SMSDetector * detector, double gen_time);
@@ -68,7 +76,12 @@ class Carrier
 //
     std::array< double,2> get_x();
     double get_q();
+    double get_diffDistance();
 
+    //double get_diffH(){return diffH;};
+
+    void calculateDiffusionStep(double dt);
+    //void calculateDiffusionH(double dt);
     std::valarray<double> simulate_drift( double dt, double max_time);
     std::valarray<double> simulate_drift(double dt, double max_time, double x_init, double y_init );
 };

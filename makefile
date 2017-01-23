@@ -42,7 +42,7 @@ CRFLAGS = `root-config --cflags`
 GC = g++ -g -std=c++11 -Wall -fPIC
 
 # define any compile-time flags
-CFLAGS = -w -g -std=c++11
+CFLAGS = -Wall -g -std=c++11
 
 # define any directories containing header files other than /usr/include
 INCLUDES = -I/usr/include/eigen3/ -I/home/jcalvopi/FitTracs/include/  -I/usr/local/root/include/ -I/usr/include/qt4/QtCore/ -I/usr/include/qt4/ -I/usr/include/qt4/QtGui/
