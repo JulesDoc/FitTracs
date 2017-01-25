@@ -64,7 +64,7 @@ TRACSInterface::TRACSInterface(std::string filename)
 
 	parameters["allow_extrapolation"] = true;
 
-	detector = new SMSDetector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType, diffusion);
+	detector = new SMSDetector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType, diffusion, dt);
 	//SMSDetector detector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType);
 	//detector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType);
 	//detector = new SMSDetector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType):
@@ -488,12 +488,19 @@ void TRACSInterface::loop_on(int tid)
 			/*for (params[0] = 0; params[0] < n_par0 + 1; params[0]++)*/
 			for (uint zPos = 0; zPos < z_shifts_array[tid].size(); zPos++)
 			{
-
+				if (z_shifts_array[tid][zPos] == 280){
+					printa = true;
+				}
+				else printa = false;
 				std::cout << "Height " << z_shifts_array[tid][zPos] << " of " << z_shifts.back()  <<  " || Y Position " << y_shifts[yPos]
-						  << " of " << y_shifts.back() << " || Voltage " << voltages[vPos] << " of " << voltages.back() << std::endl;
+																																	<< " of " << y_shifts.back() << " || Voltage " << voltages[vPos] << " of " << voltages.back() << std::endl;
 				set_zPos(z_shifts_array[tid][zPos]);
 				simulate_ramo_current();
 				GetItRc();
+				/*Showing carriers diffusion*/
+				std::cout << "NumberDs in last Z step with Height " << z_shifts_array[tid][zPos] << ": " << tempNumberDs << std::endl;
+				std::cout << "Total numberDs: " << numberDs << std::endl;
+				tempNumberDs = 0;
 				//-------------------------
 				//Build and order the final array of currents.
 				//First, get the position of the Z.
@@ -626,7 +633,7 @@ void TRACSInterface::GetTree( TTree *tree ) {
 
 	// Create a pointer to an raw data object
 	TMeas *em = new TMeas( );
-    em->Nt = n_tSteps ;
+	em->Nt = n_tSteps ;
 	em->volt = new Double_t [n_tSteps] ;
 	em->time = new Double_t [n_tSteps] ;
 	em->Qt = new Double_t [n_tSteps] ;
@@ -637,7 +644,7 @@ void TRACSInterface::GetTree( TTree *tree ) {
 	//Read RAW file
 	DumpToTree( em , tree ) ;
 	//tree->Draw("volt-BlineMean:time","event==0","l"); gPad->Modified();gPad->Update();
-    //f->Write();
+	//f->Write();
 	//f->Close();
 
 

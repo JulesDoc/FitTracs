@@ -225,7 +225,7 @@ InitialZ = 260. # in micrometers
 # simulation. As withe the initial position one might wish to have the
 # laser fall completely outside of the detector, this can be donde by 
 # setting MaximumZ to a value higher than Depth.
-MaximumZ = 290. # in micrometers
+MaximumZ = 300. # in micrometers
 
 # Quite intuitively StepInZ refers to the distance moved the laser along 
 # the Z-axis from one waveform simulation to the other. Recomended 
@@ -364,4 +364,4 @@ z2 = 220.; # in micrometers
 #new temporary parameters(choose wisely...-:)
 tolerance = TOLERANCE ;
 chiFinal =  WEIGHT ;
-diffusion = 1; #Set it to 1 to activate diffusion effects.
+diffusion = 0; #Set it to 1 to activate diffusion effects.

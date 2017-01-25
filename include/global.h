@@ -13,6 +13,8 @@ extern int num_threads;
 extern std::mutex mtx;
 extern std::string fnm;
 extern std::valarray<std::valarray <double> > vItotals;
-extern double numberDs;
+extern std::atomic<double> numberDs;
+extern std::atomic<int> tempNumberDs;
+extern bool printa;
 
 #endif // GLOBAL_H

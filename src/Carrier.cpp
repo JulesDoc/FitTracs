@@ -13,7 +13,7 @@ _detector(detector), // Detector type and characteristics
 //	_electricField(_detector->get_d_f_grad(),
 //	_weightingField(_detector->get_w_f_grad(),
 _myTemp(_detector->get_temperature()), // Temperature of the diode
-_drift(_carrier_type, detector->get_d_f_grad(), _myTemp), // Carrier Transport object
+_drift(_carrier_type, detector->get_d_f_grad(), _myTemp, _detector->diffusionON(), _detector->get_dt()), // Carrier Transport object
 _mu(_carrier_type, _myTemp),// Mobility of the CC
 diffDistance(0.),
 _trapping_time(_detector->get_trapping_time()),
@@ -45,14 +45,13 @@ _e_field_mod(0.)
  */
 void Carrier::calculateDiffusionStep(double dt){
 
-
 	//No electric field outside depleted area.
-
+	TRandom3 Rand(0);
 	//Becker Thesis, pag. 50. Lutz book, pag 18. Ejercicio de Lutz, pag. 36.
 	//diffDistance = pow(2*(1440*cm*cm/(V*s))*kB*_myTemp/(ECH)*dt,0.5) /** 1e6*/ ;
 	diffDistance = pow(2*_mu.obtain_mobility(_e_field_mod)*kB*_myTemp/(ECH)*dt,0.5);
-	_dx = diffDistance * gRandom.Gaus(0,10);
-	_dy = diffDistance * gRandom.Gaus(0,10);
+	_dx = diffDistance * Rand.Gaus(0,1);
+	_dy = diffDistance * Rand.Gaus(0,1);
 
 	_x[0] += _dx;
 	_x[1] += _dy;
@@ -139,6 +138,7 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 	double t = 0.;
 	double tDep=0.;
 
+
 	// get number of steps from time
 	int max_steps = (int) std::floor(max_time / dt);
 	std::valarray<double>  i_n(max_steps); // valarray to save intensity
@@ -157,24 +157,38 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 		while(t < (4 * _trapping_time)){
 			_e_field_mod = 0;
 			calculateDiffusionStep(dt); //Carrrier movement due to diffusion
-			t += _trapping_time;
-
-			//_x[1] = 280.2;
+			t += dt;
+			if (printa){
+				std::cout << "Z position NON depleted region: " << _x[1] << std::endl;
+				std::cout << "***" << std::endl;
+				//std::cout << "   " << std::endl;
+				std::cout << "X position NON depleted region: " << _x[0] << std::endl;
+				std::cout << "***" << std::endl;
+			}
 			if ( (_x[1] < _detector->get_depletionWidth()) && (_x[1] < _detector->get_y_max()) && (_x[0] > _detector->get_x_min()) && (_x[0] < _detector->get_x_max()) ){
 				regularCarrier = true;
-				numberDs += 1;
+				numberDs = numberDs + 1;
+				tempNumberDs = tempNumberDs + 1;
+
 				tDep = t;
+				if (printa){
+					std::cout << "***********************************************************************Z position TO depleted region: " << _x[1] << std::endl;
+					std::cout << "***" << std::endl;
+					std::cout << "***********************************************************************X position TO depleted region: " << _x[0] << std::endl;
+					std::cout << "***" << std::endl;
+				}
 				break;
 			}
 
 		}
+
 	}
 	/*End NO depleted area*/
 
 	//_numberDs = 0;
-	if (regularCarrier){
-
-	    //t=0.; // Start at time = 0
+	if ((regularCarrier) && (_x[1] < _detector->get_depletionWidth())){
+		tDep = 0;
+		//t=0.; // Start at time = 0
 		for ( int i = 0 ; i < max_steps; i++)
 		{
 
@@ -194,6 +208,9 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 			else
 			{
 
+				if  (_detector->diffusionON()){
+					calculateDiffusionStep(dt); //Carrrier movement due to diffusion
+				}
 				safeRead.lock();
 				_detector->get_d_f_grad()->eval(wrap_e_field, wrap_x);
 				_detector->get_w_f_grad()->eval(wrap_w_field, wrap_x);
@@ -201,12 +218,9 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 
 				_e_field_mod = sqrt(_e_field[0]*_e_field[0] + _e_field[1]*_e_field[1]);
 				i_n[i] = _q *_sign* _mu.obtain_mobility(_e_field_mod) * (_e_field[0]*_w_field[0] + _e_field[1]*_w_field[1]);
-				stepper.do_step(_drift, _x, tDep, dt); //Carrrier movement due to drift
-				// Trapping effects due to radiation-induced defects (traps) implemented in CarrierColleciton.cpp
 
-				if  (_detector->diffusionON()){
-					calculateDiffusionStep(dt); //Carrrier movement due to diffusion
-				}
+				stepper.do_step(_drift, _x, tDep, dt); //Carrier movement due to drift
+				// Trapping effects due to radiation-induced defects (traps) implemented in CarrierColleciton.cpp
 			}
 			tDep+=dt;
 		}

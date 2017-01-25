@@ -30,6 +30,7 @@ _detector(detector)
  * completetly avoid race conditions.
  */
 //NOT USED
+/*
 void CarrierCollection::add_carriers_from_file(QString filename, int nThreads) // should get N_thr=1 as input
 {
 
@@ -84,6 +85,7 @@ void CarrierCollection::add_carriers_from_file(QString filename, int nThreads) /
 		}
 	}
 }
+ */
 
 /*
  * Parallelizable method for simulating the drift of a given carrier collection
@@ -93,7 +95,7 @@ void CarrierCollection::add_carriers_from_file(QString filename, int nThreads) /
  */
 
 //NOT USED
-void CarrierCollection::simulate_drift( double dt, double max_time, std::valarray<double> &curr_elec, std::valarray<double> &curr_hole, int thrId)
+/*void CarrierCollection::simulate_drift( double dt, double max_time, std::valarray<double> &curr_elec, std::valarray<double> &curr_hole, int thrId)
 {
 	// range for through the carriers
 	for (auto carrier : _carrier_list[thrId])
@@ -117,7 +119,7 @@ void CarrierCollection::simulate_drift( double dt, double max_time, std::valarra
 		curr_elec[i] *= exp(-elapsedT/trapping_time);
 		curr_hole[i] *= exp(-elapsedT/trapping_time);
 	}
-}
+}*/
 
 /*
  * Parallelizable method for simulating the drift of a given carrier collection
@@ -130,7 +132,7 @@ void CarrierCollection::simulate_drift( double dt, double max_time, std::valarra
  */
 
 ///NOT USED
-void CarrierCollection::simulate_drift( double dt, double max_time, double shift_x, double shift_y, std::valarray<double> &curr_elec, std::valarray<double> &curr_hole, int thrId)
+/*void CarrierCollection::simulate_drift( double dt, double max_time, double shift_x, double shift_y, std::valarray<double> &curr_elec, std::valarray<double> &curr_hole, int thrId)
 {
 	// range for through the carriers
 	for (auto carrier : _carrier_list[thrId])
@@ -165,7 +167,7 @@ void CarrierCollection::simulate_drift( double dt, double max_time, double shift
 		curr_elec[i] *= exp(-elapsedT/trapping_time);
 		curr_hole[i] *= exp(-elapsedT/trapping_time);
 	}
-}
+}*/
 
 
 /*
@@ -201,10 +203,11 @@ void CarrierCollection::add_carriers_from_file(QString filename)
 		beamy = beamy / _carrier_list_sngl.size();
 		beamz = beamz / _carrier_list_sngl.size();
 	}
-
+	double sizeCarriers = _carrier_list_sngl.size();
+	std::cout << "****************************Carrier list size: "  << sizeCarriers << std::endl;
 }
 ////NOT USED
-void CarrierCollection::simulate_drift( double dt, double max_time, std::valarray<double> &curr_elec, std::valarray<double> &curr_hole)
+/*void CarrierCollection::simulate_drift( double dt, double max_time, std::valarray<double> &curr_elec, std::valarray<double> &curr_hole)
 {
 	// range for through the carriers
 	for (auto carrier : _carrier_list_sngl)
@@ -228,7 +231,7 @@ void CarrierCollection::simulate_drift( double dt, double max_time, std::valarra
 		curr_elec[i] *= exp(-elapsedT/trapping_time);
 		curr_hole[i] *= exp(-elapsedT/trapping_time);
 	}
-}
+}*/
 
 //USED
 void CarrierCollection::simulate_drift( double dt, double max_time, double shift_x /*yPos*/, double shift_y /*zPos*/,
@@ -248,8 +251,9 @@ void CarrierCollection::simulate_drift( double dt, double max_time, double shift
 			double x_init = x[0] + shift_x;
 			double y_init = x[1] + shift_y;
 
+
 			curr_elec += carrier.simulate_drift( dt , max_time, x_init, y_init);
-			}
+		}
 
 		else if (carrier_type =='h')
 		{

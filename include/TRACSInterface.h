@@ -37,7 +37,7 @@ extern TH1D *H1DConvolution( TH1D *htct, Double_t Cend=0. , int tid=0) ;
 class TRACSInterface
 {
 
-//friend TTree * GetTree( ) ;
+	//friend TTree * GetTree( ) ;
 private:
 
 	// Declaring external convolution function
@@ -167,11 +167,11 @@ public:
 	}
 
 	inline double GetTolerance(){
-			return tolerance;
+		return tolerance;
 	}
 
 	inline double GetchiFinal(){
-			return chiFinal;
+		return chiFinal;
 	}
 
 	//Tree functions
@@ -209,7 +209,7 @@ public:
 	void set_carrierFile(std::string newCarrFile);
 	void set_vItotals(double);
 
-     //ROOT related
+	//ROOT related
 	void DumpToTree( TMeas *em , TTree *tree ) ;
 	void GetTree( TTree * tree ) ;
 };

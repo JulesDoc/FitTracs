@@ -2,7 +2,7 @@
 #include <Source.h>
 
 SMSDetector::SMSDetector(double pitch, double width, double depth, int nns, char bulk_type, char implant_type, int n_cells_x, int n_cells_y, double tempK, double trapping,
-		double fluence, std::vector<double> neff_param, std::string neff_type, int diffusion) :
+		double fluence, std::vector<double> neff_param, std::string neff_type, int diffusion, double dt) :
 
 		_pitch(pitch), //Distance between implants
 		_width(width), //Size of the implant
@@ -25,6 +25,7 @@ SMSDetector::SMSDetector(double pitch, double width, double depth, int nns, char
 		_f_poisson(0),
 		_diffusion(diffusion),
 		depletion_width(0.),
+		_dt(dt),
 		// Mesh properties
 		_n_cells_x(n_cells_x),
 		_n_cells_y(n_cells_y),
@@ -361,6 +362,12 @@ double SMSDetector::get_depletionWidth(){
 	depletion_width = _depth * sqrt((_v_strips-_v_backplane)/_vdep);
 	return depletion_width;
 }
+
+double SMSDetector::get_dt(){
+
+	return _dt;
+}
+
 ///////////////////////SETTERS//////////////////////////////////
 
 /*

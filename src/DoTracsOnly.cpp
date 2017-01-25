@@ -41,21 +41,21 @@ int main( int argc, char *argv[]) {
 	}
 	numberDs = 0;
 
-	//This to fix the number of threads chosen by the user. It is possible that the number of threads launched do not match with the array of steps, then it breaks.
-	//It can be commented if the user want to control it by himself. When commented, start the thread loop from 0 instead of from 1!!.
+	//This to fix the number of threads with the maximum number possible in the system and in addition with a number chosen by the user. It is possible that the number of threads launched do not match
+	//with the array of steps, then it breaks. It can be commented if the user want to control it by himself. When commented, start the thread loop from 0 instead of from 1!!.
 
-	TRACSsim.resize(num_threads);
+	/*TRACSsim.resize(num_threads);
 	t.resize(num_threads);
 	t[0] = std::thread(call_from_thread, 0);
-	t[0].join();
+	t[0].join();*/
 
 
 	TRACSsim.resize(num_threads);
 	t.resize(num_threads);
-	for (uint i = 1; i < num_threads; ++i) {
+	for (uint i = 0; i < num_threads; ++i) {
 		t[i] = std::thread(call_from_thread, i);
 	}
-	for (int i = 1; i < num_threads; ++i) {
+	for (int i = 0; i < num_threads; ++i) {
 		t[i].join();
 	}
 
