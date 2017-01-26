@@ -136,8 +136,8 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 
 	bool regularCarrier = true;
 	double t = 0.;
-	double tDep=0.;
-
+	double tDiff=0.;
+	double tDep = 0;
 
 	// get number of steps from time
 	int max_steps = (int) std::floor(max_time / dt);
@@ -149,34 +149,20 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 	Array<double> wrap_w_field(2, _w_field.data());
 
 
+
 	/*Carrier is in NO depleted area*/
 	if ( (_x[1] > _detector->get_depletionWidth()) && (_x[1] < _detector->get_y_max()) && (_x[0] > _detector->get_x_min()) && (_x[0] < _detector->get_x_max()) && (_detector->diffusionON()) ){
 		regularCarrier = false;
 		//Start at time = 0
 		//Four times the trapping time represent almost 100% of the signal.
-		while(t < (4 * _trapping_time)){
+		while(tDiff < (4 * _trapping_time)){
 			_e_field_mod = 0;
 			calculateDiffusionStep(dt); //Carrrier movement due to diffusion
-			t += dt;
-			if (printa){
-				std::cout << "Z position NON depleted region: " << _x[1] << std::endl;
-				std::cout << "***" << std::endl;
-				//std::cout << "   " << std::endl;
-				std::cout << "X position NON depleted region: " << _x[0] << std::endl;
-				std::cout << "***" << std::endl;
-			}
+			tDiff += dt;
 			if ( (_x[1] < _detector->get_depletionWidth()) && (_x[1] < _detector->get_y_max()) && (_x[0] > _detector->get_x_min()) && (_x[0] < _detector->get_x_max()) ){
 				regularCarrier = true;
 				numberDs = numberDs + 1;
 				tempNumberDs = tempNumberDs + 1;
-
-				tDep = t;
-				if (printa){
-					std::cout << "***********************************************************************Z position TO depleted region: " << _x[1] << std::endl;
-					std::cout << "***" << std::endl;
-					std::cout << "***********************************************************************X position TO depleted region: " << _x[0] << std::endl;
-					std::cout << "***" << std::endl;
-				}
 				break;
 			}
 
@@ -187,22 +173,20 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 
 	//_numberDs = 0;
 	if ((regularCarrier) && (_x[1] < _detector->get_depletionWidth())){
-		tDep = 0;
+		//tDep = 0;
 		//t=0.; // Start at time = 0
-		for ( int i = 0 ; i < max_steps; i++)
+
+		int it0 = ( _detector->diffusionON() ) ? TMath::Nint( (_gen_time + tDiff)/dt ) : TMath::Nint( _gen_time/dt ) ;
+		for ( int i = it0 ; i < max_steps; i++)
 		{
 
-			if (tDep < _gen_time) // If CC not yet generated.
-				//This time in the config file is equivalent to TrappingTime
+			if (_detector->is_out(_x)) // If CC outside detector
 			{
 				i_n[i] = 0;
-			}
-			else if (_detector->is_out(_x)) // If CC outside detector
-			{
-				i_n[i] = 0;
+
 				//Take into account if it is not depleted area. And code diffusion movements for a t and
 				//check if is inside depletion in less than 2*trapping time.
-				//If yes, that particles starts tu feel diffusion and electric field.
+				//If yes, that particles starts to feel diffusion and electric field.
 				break; // Finish (CC gone out)
 			}
 			else
@@ -217,9 +201,11 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 				safeRead.unlock();
 
 				_e_field_mod = sqrt(_e_field[0]*_e_field[0] + _e_field[1]*_e_field[1]);
+
 				i_n[i] = _q *_sign* _mu.obtain_mobility(_e_field_mod) * (_e_field[0]*_w_field[0] + _e_field[1]*_w_field[1]);
 
 				stepper.do_step(_drift, _x, tDep, dt); //Carrier movement due to drift
+							//}
 				// Trapping effects due to radiation-induced defects (traps) implemented in CarrierColleciton.cpp
 			}
 			tDep+=dt;
@@ -227,6 +213,7 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 		return i_n;
 	}
 	return i_n=0.;
+
 }
 
 /************************************************************************

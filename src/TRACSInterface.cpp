@@ -488,10 +488,10 @@ void TRACSInterface::loop_on(int tid)
 			/*for (params[0] = 0; params[0] < n_par0 + 1; params[0]++)*/
 			for (uint zPos = 0; zPos < z_shifts_array[tid].size(); zPos++)
 			{
-				if (z_shifts_array[tid][zPos] == 280){
-					printa = true;
-				}
-				else printa = false;
+				//if (z_shifts_array[tid][zPos] == 278){
+				//	printa = true;
+				//}
+				//else printa = false;
 				std::cout << "Height " << z_shifts_array[tid][zPos] << " of " << z_shifts.back()  <<  " || Y Position " << y_shifts[yPos]
 																																	<< " of " << y_shifts.back() << " || Voltage " << voltages[vPos] << " of " << voltages.back() << std::endl;
 				set_zPos(z_shifts_array[tid][zPos]);
