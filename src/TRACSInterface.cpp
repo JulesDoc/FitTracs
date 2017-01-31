@@ -17,6 +17,7 @@ std::mutex mtx2;
 TRACSInterface::TRACSInterface(std::string filename)
 {
 	neff_param = std::vector<double>(8,0);
+	total_crosses = 0;
 	//utilities::parse_config_file(filename, carrierFile, depth, width, pitch, nns, temp, trapping, fluence, n_cells_x, n_cells_y, bulk_type, implant_type,
 	//C, dt, max_time, vBias, vDepletion, zPos, yPos, neff_param, neffType);
 	utilities::parse_config_file(filename, carrierFile, depth, width,  pitch, nns, temp, trapping, fluence, nThreads, n_cells_x, n_cells_y, bulk_type,
@@ -137,6 +138,7 @@ TRACSInterface::TRACSInterface(std::string filename)
 	i_ramo  = NULL;
 	i_rc    = NULL;
 	i_conv  = NULL;
+
 }
 // Reads values, initializes detector
 
@@ -250,10 +252,10 @@ void TRACSInterface::simulate_ramo_current()
 	i_elec = 0;
 	i_total = 0;
 
-	//Important for Diffusion
-	//yPos is later transformed into X.
-	//zPos is later transformed into Y.
-	carrierCollection->simulate_drift( dt, max_time, yPos, zPos, i_elec, i_hole);
+	/*Important for Diffusion:
+	yPos is later transformed into X.
+	zPos is later transformed into Y.*/
+	carrierCollection->simulate_drift( dt, max_time, yPos, zPos, i_elec, i_hole, total_crosses);
 	i_total = i_elec + i_hole;
 }
 
@@ -488,19 +490,13 @@ void TRACSInterface::loop_on(int tid)
 			/*for (params[0] = 0; params[0] < n_par0 + 1; params[0]++)*/
 			for (uint zPos = 0; zPos < z_shifts_array[tid].size(); zPos++)
 			{
-				//if (z_shifts_array[tid][zPos] == 278){
-				//	printa = true;
-				//}
-				//else printa = false;
+
 				std::cout << "Height " << z_shifts_array[tid][zPos] << " of " << z_shifts.back()  <<  " || Y Position " << y_shifts[yPos]
-																																	<< " of " << y_shifts.back() << " || Voltage " << voltages[vPos] << " of " << voltages.back() << std::endl;
+				          << " of " << y_shifts.back() << " || Voltage " << voltages[vPos] << " of " << voltages.back() << std::endl;
 				set_zPos(z_shifts_array[tid][zPos]);
 				simulate_ramo_current();
 				GetItRc();
-				/*Showing carriers diffusion*/
-				std::cout << "NumberDs in last Z step with Height " << z_shifts_array[tid][zPos] << ": " << tempNumberDs << std::endl;
-				std::cout << "Total numberDs: " << numberDs << std::endl;
-				tempNumberDs = 0;
+
 				//-------------------------
 				//Build and order the final array of currents.
 				//First, get the position of the Z.

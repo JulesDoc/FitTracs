@@ -39,7 +39,7 @@ int main( int argc, char *argv[]) {
 
 		num_threads = 1;
 	}
-	numberDs = 0;
+	//numberDs = 0;
 
 	//This to fix the number of threads with the maximum number possible in the system and in addition with a number chosen by the user. It is possible that the number of threads launched do not match
 	//with the array of steps, then it breaks. It can be commented if the user want to control it by himself. When commented, start the thread loop from 0 instead of from 1!!.
@@ -59,18 +59,26 @@ int main( int argc, char *argv[]) {
 		t[i].join();
 	}
 
-
 	//write output to single file!
 	TRACSsim[0]->write_to_file(0);
-	//Finalizing the execution
-	//getter test
+
+	//Results showed for diffusion
+	int crosses = 0;
+	for (int i = 0; i < num_threads; i++){
+		crosses+=TRACSsim[i]->GettotalCrosses();
+	}
+	std::cout << "Total particles crossed to Depleted Region: " << crosses << std::endl;
+	//End results due to diffusion
+
+	//Neff show
 	std::vector<double> neff_test = TRACSsim[0]->get_NeffParam();
 	std::cout << "Neff param.: " << std::endl;
 	for (int i = 0; i < 8; i++)
 	{
 		std::cout << neff_test[i] << std::endl;
 	}
-	std::cout << "numberDs: " << numberDs << std::endl;
+	//End Neff show
+
 	//Clean
 	for (int i = 0; i < TRACSsim.size(); i++)	{
 		delete TRACSsim[i];

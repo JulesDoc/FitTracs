@@ -1,5 +1,6 @@
 #include "Carrier.h"
 
+std::mutex mtn;
 /*
  * Constructor for Carrier.cpp that sets and stores the values given in their respective places.
  *
@@ -19,7 +20,8 @@ diffDistance(0.),
 _trapping_time(_detector->get_trapping_time()),
 _dx(0.),
 _dy(0.),
-_e_field_mod(0.)
+_e_field_mod(0.),
+_crossed(false)
 
 {
 
@@ -65,62 +67,6 @@ void Carrier::calculateDiffusionStep(double dt){
 
 
 /*
- ******************** CARRIER DRIF SIMULATION METHOD**************************
- * --Overloaded--
- *
- * Simulates how the CC drifts inside the detector in the 
- * desired number of steps
- *
- */
-//NOT USED
-std::valarray<double> Carrier::simulate_drift(double dt, double max_time)
-{
-	// get number of steps from time
-	int max_steps = (int) std::floor(max_time / dt);
-
-	std::valarray<double>  i_n(max_steps); // valarray to save intensity
-
-	runge_kutta4<std::array< double,2>> stepper;
-
-	// wrapper for the arrays using dolphin array class
-	Array<double> wrap_x(2, _x.data());
-	Array<double> wrap_e_field(2, _e_field.data());
-	Array<double> wrap_w_field(2, _w_field.data());
-
-	double t=0.0;
-
-	for ( int i = 0 ; i < max_steps; i++) // Simulate for the desired number of steps
-	{
-
-		if (t < _gen_time)
-		{
-			i_n[i] = 0;
-		}
-		else if (_detector->is_out(_x)) // if outside of the detector
-		{
-			i_n[i] = 0;
-			break;
-		}
-		else
-		{
-			_detector->get_d_f_grad()->eval(wrap_e_field, wrap_x);
-			_detector->get_w_f_grad()->eval(wrap_w_field, wrap_x);
-			//_weightingField->eval(wrap_w_field, wrap_x);
-			//_electricField->eval(wrap_w_field, wrap_x); 
-			_e_field_mod = sqrt(_e_field[0]*_e_field[0] + _e_field[1]*_e_field[1]);
-			i_n[i] = _q *_sign*_mu.obtain_mobility(_e_field_mod) * (_e_field[0]*_w_field[0] + _e_field[1]*_w_field[1]);
-			// Trapping effects due to radiation-induced defects (traps) implemented in CarrierColleciton.cpp
-			stepper.do_step(_drift, _x, t, dt);
-
-
-
-		}
-		t+=dt;
-	}
-	return i_n;
-}
-
-/*
  ******************** CARRIER DRIFT SIMULATION METHOD**************************
  * --Overloaded--
  *
@@ -153,16 +99,16 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 	/*Carrier is in NO depleted area*/
 	if ( (_x[1] > _detector->get_depletionWidth()) && (_x[1] < _detector->get_y_max()) && (_x[0] > _detector->get_x_min()) && (_x[0] < _detector->get_x_max()) && (_detector->diffusionON()) ){
 		regularCarrier = false;
-		//Start at time = 0
 		//Four times the trapping time represent almost 100% of the signal.
-		while(tDiff < (4 * _trapping_time)){
+		while( (tDiff < (4 * _trapping_time)) &&  (tDiff<max_time)  ){
 			_e_field_mod = 0;
 			calculateDiffusionStep(dt); //Carrrier movement due to diffusion
 			tDiff += dt;
 			if ( (_x[1] < _detector->get_depletionWidth()) && (_x[1] < _detector->get_y_max()) && (_x[0] > _detector->get_x_min()) && (_x[0] < _detector->get_x_max()) ){
 				regularCarrier = true;
-				numberDs = numberDs + 1;
-				tempNumberDs = tempNumberDs + 1;
+				//To count carriers passing to the depleted region
+				_crossed = true;
+
 				break;
 			}
 
@@ -170,11 +116,7 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 
 	}
 	/*End NO depleted area*/
-
-	//_numberDs = 0;
 	if ((regularCarrier) && (_x[1] < _detector->get_depletionWidth())){
-		//tDep = 0;
-		//t=0.; // Start at time = 0
 
 		int it0 = ( _detector->diffusionON() ) ? TMath::Nint( (_gen_time + tDiff)/dt ) : TMath::Nint( _gen_time/dt ) ;
 		for ( int i = it0 ; i < max_steps; i++)
@@ -256,6 +198,10 @@ double Carrier::get_diffDistance(){
 	return diffDistance;
 }
 
+bool Carrier::crossed(){
+
+	return _crossed;
+}
 
 
 /*
@@ -291,6 +237,7 @@ Carrier::Carrier(const Carrier& other)
 	_dx = other._dx;
 	_dy = other._dy;
 	diffDistance = other.diffDistance;
+	_crossed = other._crossed;
 	//_dep_width = other._dep_width;
 	//_xMax = other._xMax;
 	//_xMin = other._xMin;
@@ -324,6 +271,7 @@ Carrier& Carrier::operator = (const Carrier& other)
 	_dx = other._dx;
 	_dy = other._dy;
 	diffDistance = other.diffDistance;
+	_crossed = other._crossed;
 	//_dep_width = other._dep_width;
 	//_xMax = other._xMax;
 	//_xMin = other._xMin;
@@ -356,6 +304,7 @@ Carrier::Carrier(Carrier&& other)
 	_dx = std::move(other._dx);
 	_dy = std::move(other._dy);
 	diffDistance = std::move(other.diffDistance);
+	_crossed = std::move(other._crossed);
 	//_dep_width = std::move(other._dep_width);
 	//_xMax = std::move(other._xMax);
 	//_xMin = std::move(other._xMin);
@@ -404,6 +353,8 @@ Carrier& Carrier::operator = ( Carrier&& other)
 	other._dy = 0.;
 	diffDistance = std::move(other.diffDistance);
 	other.diffDistance = 0.;
+	_crossed = std::move(other._crossed);
+	other._crossed = false;
 	//_dep_width = std::move(other._dep_width);
 	//_xMax = std::move(other._xMax);
 	//_xMin = std::move(other._xMin);

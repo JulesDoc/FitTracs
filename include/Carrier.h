@@ -51,10 +51,13 @@ private:
 	JacoboniMobility _mu;
 	double _trapping_time;
 	double diffDistance;
-	//double _numberDs;
+	bool _crossed;
 	TRandom3 gRandom;
 
 public:
+
+
+
 	Carrier( char carrier_type, double q, double x_init, double y_init, SMSDetector * detector, double gen_time);
 	Carrier(Carrier&& other); // Move declaration
 	Carrier& operator = (Carrier&& other); // Move assignment
@@ -77,6 +80,7 @@ public:
 	std::array< double,2> get_x();
 	double get_q();
 	double get_diffDistance();
+	bool crossed();
 
 	//double get_diffH(){return diffH;};
 

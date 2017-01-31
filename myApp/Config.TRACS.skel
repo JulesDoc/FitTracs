@@ -176,7 +176,7 @@ TimeStep = 200.e-12   # in seconds
 # the whole signal is collected before the end of the simulation it has 
 # no effect of the results
 #TotalTime = 14.e-9   # in seconds 
-TotalTime = 10.e-9   # in seconds 
+TotalTime = 50.e-9   # in seconds 
 
 #------------------------ VOLTAGE PROPERTIES -----------------------------#
 
@@ -219,19 +219,19 @@ DepletionVoltage = 250.0 # in volts
 # one position; in the former case starting at a negative value might make 
 # sense if one wishes to have the laser beam completely out of the 
 # detector.
-InitialZ = 260. # in micrometers
+InitialZ = -10. # in micrometers
 
 # Next thing to set up is the last position of the laser for the 
 # simulation. As withe the initial position one might wish to have the
 # laser fall completely outside of the detector, this can be donde by 
 # setting MaximumZ to a value higher than Depth.
-MaximumZ = 300. # in micrometers
+MaximumZ = 310. # in micrometers
 
 # Quite intuitively StepInZ refers to the distance moved the laser along 
 # the Z-axis from one waveform simulation to the other. Recomended 
 # ScanStep values range from 1-3 to 10 micrometers but can be made as big 
 # or small as desired.
-StepInZ = 1.
+StepInZ = 3.
 
 
 #-------------------------- Y-SCAN PROPERTIES ----------------------------#
@@ -284,7 +284,7 @@ StepInY = 5. # in micrometers
 # below.
 #
 # Trapping time-constant, affects total collected signal
-TrappingTime = 5.e-9   # Double in seconds
+TrappingTime = 1.e9   # Double in seconds
 
 # Fluence to which the detector has been irradiated. Controls whether 
 # simulated diode is irradiated(>0) or not(==0)
@@ -364,4 +364,4 @@ z2 = 220.; # in micrometers
 #new temporary parameters(choose wisely...-:)
 tolerance = TOLERANCE ;
 chiFinal =  WEIGHT ;
-diffusion = 0; #Set it to 1 to activate diffusion effects.
+diffusion = 1 ; #Set it to 1 to activate diffusion effects.

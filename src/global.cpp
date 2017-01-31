@@ -8,7 +8,7 @@ vector<vector <TH1D*> >  i_ramo_array, i_conv_array, i_rc_array;
 std::string fnm="Config.TRACS.skel";
 std::mutex mtx;
 int num_threads;
-std::atomic<double> numberDs;
-std::atomic<int> tempNumberDs;
+//std::atomic<double> numberDs;
+//std::atomic<int> tempNumberDs;
 bool printa = false;
 

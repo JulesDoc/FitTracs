@@ -18,158 +18,6 @@ _detector(detector)
 }
 
 
-
-
-/*
- * Parallel overload of the method that reads an arbitrary carrier distribution from a file
- * This bit of the code is not parallel and parallelizing it would not yield significant performance
- * improvements as it's only run once per simulation.
- *
- * The parallelization difference with the standard method is done by storing the carriers in an N-dimensional
- * array of Carriers for N threads simulaiton. This way each thread to have their own carrier list and 
- * completetly avoid race conditions.
- */
-//NOT USED
-/*
-void CarrierCollection::add_carriers_from_file(QString filename, int nThreads) // should get N_thr=1 as input
-{
-
-	// get char representation and make ifstream
-	char * char_fn = filename.toLocal8Bit().data();
-	std::ifstream infile(char_fn);
-	// define temporal 1-D vector
-	std::vector<Carrier> allCarriers;
-
-	if (!infile.good()){
-		std::cout<<"Warning: File not found"<<std::endl;
-	}
-	else
-	{
-		// process line by line
-		std::string line;
-		while (std::getline(infile, line))
-		{
-			std::istringstream iss(line);
-			char carrier_type;
-			double q, x_init, y_init, gen_time;
-			if (!(iss >> carrier_type >> q >> x_init >> y_init >> gen_time)) 
-			{
-				break;
-			}
-
-			// read all carriers
-			Carrier carrier(carrier_type, q, x_init, y_init , _detector, gen_time);
-			allCarriers.push_back(carrier);
-			//_carrier_list_sngl.push_back(carrier); //TEST
-		}
-
-		// get #carriers, #carriers/N_thr, initialize carrier_collection
-		int nCarriers = allCarriers.size();
-		int carrierPerThread = (int) std::ceil(nCarriers/nThreads);
-		Carrier emptyCarrier('e', 0.0, -10.0, -10.0, _detector, 0);
-		int count = 0;
-		std::vector<Carrier> defaultVector (carrierPerThread, emptyCarrier);
-		_carrier_list.resize(nThreads); //TEST
-		// 2 for-loops (N_thr(#carriers/N_thr)) to fill each dimension 
-		for (int i = 0; i < nThreads; i++)
-		{
-			//_carrier_list.push_back(defaultVector);
-			for (int j = 0; j < carrierPerThread; j++) 
-			{   			
-				if (count < nCarriers) 
-				{
-					_carrier_list[i].push_back(allCarriers[count]);
-					count++;
-				}
-			}
-		}
-	}
-}
- */
-
-/*
- * Parallelizable method for simulating the drift of a given carrier collection
- *
- * thrId is the number (thread ID) of the thread in which this method is run. Requires that the carrier 
- * files has been read using the overload parallelization-read add_carriers_from_file method.
- */
-
-//NOT USED
-/*void CarrierCollection::simulate_drift( double dt, double max_time, std::valarray<double> &curr_elec, std::valarray<double> &curr_hole, int thrId)
-{
-	// range for through the carriers
-	for (auto carrier : _carrier_list[thrId])
-	{
-		char carrier_type = carrier.get_carrier_type();
-		// simulate drift and add to proper valarray
-		if (carrier_type == 'e')
-		{
-			curr_elec += carrier.simulate_drift( dt , max_time);
-		}
-		else if (carrier_type =='h')
-		{ 
-			curr_hole += carrier.simulate_drift( dt , max_time);
-		}
-	}
-	double trapping_time = _detector->get_trapping_time();
-
-	for (double i = 0.; i < curr_hole.size(); i ++)
-	{
-		double elapsedT = i*dt;
-		curr_elec[i] *= exp(-elapsedT/trapping_time);
-		curr_hole[i] *= exp(-elapsedT/trapping_time);
-	}
-}*/
-
-/*
- * Parallelizable method for simulating the drift of a given carrier collection
- *
- * thrId is the number (thread ID) of the thread in which this method is run. Requires that the carrier 
- * files has been read using the overload parallelization-read add_carriers_from_file method.
- *
- * This method allows the user to move the carriers in the X-axis an amount shift_x and in the Y-axis by an amount shift_y
- * Performance improves greatly over reading a new carriers file with said displacements.
- */
-
-///NOT USED
-/*void CarrierCollection::simulate_drift( double dt, double max_time, double shift_x, double shift_y, std::valarray<double> &curr_elec, std::valarray<double> &curr_hole, int thrId)
-{
-	// range for through the carriers
-	for (auto carrier : _carrier_list[thrId])
-	{
-		char carrier_type = carrier.get_carrier_type();
-
-
-
-		// simulate drift and add to proper valarray
-		if (carrier_type == 'e')
-		{
-			// get and shift carrier position
-			std::array< double,2> x = carrier.get_x();
-			double x_init = x[0]+shift_x;
-			double y_init = x[1]+shift_y;
-			curr_elec += carrier.simulate_drift( dt , max_time, x_init, y_init);
-		}
-		else if (carrier_type =='h')
-		{
-			// get and shift carrier position
-			std::array< double,2> x = carrier.get_x();
-			double x_init = x[0]+shift_x;
-			double y_init = x[1]+shift_y;
-			curr_hole += carrier.simulate_drift( dt , max_time, x_init, y_init);
-		}
-	}
-	double trapping_time = _detector->get_trapping_time();
-
-	for (double i = 0.; i < curr_hole.size(); i ++)
-	{
-		double elapsedT = i*dt;
-		curr_elec[i] *= exp(-elapsedT/trapping_time);
-		curr_hole[i] *= exp(-elapsedT/trapping_time);
-	}
-}*/
-
-
 /*
  ********************** OVERLOADED FUNCTIONS FOR GUI COMPATIBILITY **************************
  */
@@ -203,41 +51,17 @@ void CarrierCollection::add_carriers_from_file(QString filename)
 		beamy = beamy / _carrier_list_sngl.size();
 		beamz = beamz / _carrier_list_sngl.size();
 	}
-	double sizeCarriers = _carrier_list_sngl.size();
-	std::cout << "****************************Carrier list size: "  << sizeCarriers << std::endl;
+	//double sizeCarriers = _carrier_list_sngl.size();
+	//std::cout << "****************************Carrier list size: "  << sizeCarriers << std::endl;
 }
-////NOT USED
-/*void CarrierCollection::simulate_drift( double dt, double max_time, std::valarray<double> &curr_elec, std::valarray<double> &curr_hole)
-{
-	// range for through the carriers
-	for (auto carrier : _carrier_list_sngl)
-	{
-		char carrier_type = carrier.get_carrier_type();
-		// simulate drift and add to proper valarray
-		if (carrier_type == 'e')
-		{
-			curr_elec += carrier.simulate_drift( dt , max_time);
-		}
-		else if (carrier_type =='h')
-		{
-			curr_hole += carrier.simulate_drift( dt , max_time);
-		}
-	}
-	double trapping_time = _detector->get_trapping_time();
-
-	for (double i = 0.; i < curr_hole.size(); i ++)
-	{
-		double elapsedT = i*dt;
-		curr_elec[i] *= exp(-elapsedT/trapping_time);
-		curr_hole[i] *= exp(-elapsedT/trapping_time);
-	}
-}*/
 
 //USED
 void CarrierCollection::simulate_drift( double dt, double max_time, double shift_x /*yPos*/, double shift_y /*zPos*/,
-		std::valarray<double>&curr_elec, std::valarray<double> &curr_hole)
+		std::valarray<double>&curr_elec, std::valarray<double> &curr_hole, int &totalCrosses)
 {
 
+	int i = 0;
+	int totalCross = 0;
 	// range for through the carriers
 	for (auto carrier : _carrier_list_sngl)
 	{
@@ -251,7 +75,6 @@ void CarrierCollection::simulate_drift( double dt, double max_time, double shift
 			double x_init = x[0] + shift_x;
 			double y_init = x[1] + shift_y;
 
-
 			curr_elec += carrier.simulate_drift( dt , max_time, x_init, y_init);
 		}
 
@@ -264,8 +87,15 @@ void CarrierCollection::simulate_drift( double dt, double max_time, double shift
 
 			curr_hole += carrier.simulate_drift( dt , max_time, x_init, y_init);
 		}
-		//std::cout << carrier.get_numberDs() << std::endl;
+		//Let's see how many carriers from the carrier list for this step in Z have crossed to the depleted region.
+		//A flag is switched to true on carrier.simulate_drift when a carrier filfull the requirements. See carrier.simulate_drift
+		if (carrier.crossed()){
+			totalCross += 1;
+		}
 	}
+	std::cout << "Number of carriers crossed to DR in last Z step with Height " << shift_y << ": " << totalCross << std::endl;
+	totalCrosses += totalCross;
+
 	double trapping_time = _detector->get_trapping_time();
 
 	for (double i = 0.; i < curr_hole.size(); i ++)

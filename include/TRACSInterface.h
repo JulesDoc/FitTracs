@@ -67,6 +67,7 @@ private:
 	double tolerance;
 	double chiFinal;
 	int diffusion;
+	int total_crosses;
 
 	int nThreads;
 	int nns;
@@ -172,6 +173,10 @@ public:
 
 	inline double GetchiFinal(){
 		return chiFinal;
+	}
+
+	inline int GettotalCrosses(){
+		return total_crosses;
 	}
 
 	//Tree functions
