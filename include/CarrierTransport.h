@@ -1,3 +1,5 @@
+/*****This code is property of CERN and IFCA under GPL License. Developed by: Marcos Fernandez, Pablo de Castro, Alvaro Diez, Urban Senica and Julio Calvo.*****/
+
 #ifndef CARRIERTRANSPORT_H
 #define CARRIERTRANSPORT_H
 

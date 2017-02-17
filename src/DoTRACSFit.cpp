@@ -1,9 +1,16 @@
-/*
-  Example
+/*****This code is property of CERN and IFCA under GPL License. Developed by: Marcos Fernandez, Pablo de Castro, Alvaro Diez, Urban Senica and Julio Calvo.*****/
 
+/************************************DoTRACSFit***********************************
+ *
+ * TRACS can run multiple modes of operation, one of them is fitting some parameters related to the characterization of the detector.
+ * This file contains the main function which manages the files passed by the user and the Minuit callings.
+ * It implements operator as well, the steering method of the loop used in the minimization.
+ *
+ * There is a common part in every main function used in TRACS which correspond to the threads initialization.
+ *
     DoTRACSFit MeasurementFile TRACS.conf "Vbias==200 && Tset == 20"
 
-*/
+ */
 
 //#include <TApplication.h>
 #include <Minuit2/FunctionMinimum.h>
@@ -33,140 +40,146 @@ using namespace ROOT::Minuit2;
 
 int main( int argc, char *argv[]) {
 
-    //TApplication theApp("DoTRACSFit", 0, 0);
+	//TApplication theApp("DoTRACSFit", 0, 0);
 
-    //Number of threads
-    num_threads = atoi(argv[1]);
+	//Number of threads
+	num_threads = atoi(argv[1]);
 
-    //Measurement file
-    TString FileMeas = TString( argv[2] ) ;
-    fnm = FileMeas.Data();
+	//Measurement file
+	TString FileMeas = TString( argv[2] ) ;
+	//fnm = FileMeas.Data();
 
-    //Configuration file
-    TString FileConf = TString( argv[3] ) ;
+	//Configuration file
+	TString FileConf = TString( argv[3] ) ;
+	std::string lfnm(argv[3]) ;
+	fnm = lfnm;
 
-    //Restrictions for fits
-    TString how="";
-    if (argc>2) how = TString( argv[4] ) ;
+	//Restrictions for fits
+	TString how="";
+	if (argc>2) how = TString( argv[4] ) ;
 
-    TRACSsim.resize(num_threads);
-    t.resize(num_threads);
-    t[0] = std::thread(call_from_thread, 0);
-    t[0].join();
+	//TRACSsim.resize(num_threads);
+	//t.resize(num_threads);
+	//t[0] = std::thread(call_from_thread, 0);
+	//t[0].join();
 
-    TRACSsim.resize(num_threads);
-    t.resize(num_threads);
-    for (uint i = 1; i < num_threads; ++i) {
-    	t[i] = std::thread(call_from_thread, i);
-    }
-    for (int i = 1; i < num_threads; ++i) {
-    	t[i].join();
-    }
+	TRACSsim.resize(num_threads);
+	t.resize(num_threads);
+	for (int i = 0; i < num_threads; ++i) {
+		t[i] = std::thread(call_from_thread, i);
+	}
+	for (int i = 0; i < num_threads; ++i) {
+		t[i].join();
+	}
 
-    fit = new TRACSFit( FileMeas, FileConf , how ) ;
+	fit = new TRACSFit( FileMeas, FileConf , how ) ;
 
-    //Define parameters and their errors to Minuit
+	//Define parameters and their errors to Minuit
 
-    vector<Double_t> parIni = TRACSsim[0]->get_NeffParam();
-    Int_t nNeff = parIni.size() ;
+	vector<Double_t> parIni = TRACSsim[0]->get_NeffParam();
+	Int_t nNeff = parIni.size() ;
 
-    vector<Double_t> parErr(nNeff, 1.) ;
+	vector<Double_t> parErr(nNeff, 1.) ;
 
-    //Pass parameters to Minuit
-    MnUserParameters upar(parIni,parErr) ;
-    for ( int i=0 ; i < nNeff ; i++ ) {
-        char pname[8]; sprintf( pname , "p%d" , i);
-    	upar.SetName( i , pname );
-    }
-         
-    //Fix parameters
-    upar.Fix(0) ;
-    upar.Fix(1) ; upar.Fix(2) ;
-    //upar.Fix(3) ;
-    upar.Fix(4) ; upar.Fix(5); upar.Fix(6) ; upar.Fix(7);
+	//Pass parameters to Minuit
+	MnUserParameters upar(parIni,parErr) ;
+	for ( int i=0 ; i < nNeff ; i++ ) {
+		char pname[8]; sprintf( pname , "p%d" , i);
+		upar.SetName( i , pname );
+	}
 
-    std::cout << "=============================================" << std::endl;
-    std::cout<<"Initial parameters: "<<upar<<std::endl;
-    std::cout << "=============================================" << std::endl;
+	//Fix parameters
+	upar.Fix(0) ;
+	upar.Fix(1) ; upar.Fix(2) ;
+	//upar.Fix(3) ;
+	upar.Fix(4) ; upar.Fix(5); upar.Fix(6) ; upar.Fix(7);
 
-    //Do the minimization
+	std::cout << "=============================================" << std::endl;
+	std::cout<<"Initial parameters: "<<upar<<std::endl;
+	std::cout << "=============================================" << std::endl;
 
-    MnMigrad mn( *fit , upar ) ;
-    FunctionMinimum min = mn() ;
+	//Do the minimization
 
-    //Status report
-    if (min.IsValid()) std::cout << "Fit success"         << std::endl ;
-    else               std::cout << "Fit failed"   << std::endl ;
-    std::cout << "Total time: " << total_timeTaken.total_seconds() << std::endl ;
-    std::cout << "MINIMIZATION OUTCOME: " <<  min  << std::endl ;
- 
-    //Release parameter 3 and 0, minimize again
-    upar.SetValue(0, min.UserState().Value(0) ) ;
-    upar.SetValue(3, min.UserState().Value(3) ) ;
-    upar.Release(0) ; upar.Release(3) ;
-    MnMigrad mnr( *fit , upar ) ;
-    min = mnr() ;
+	MnMigrad mn( *fit , upar ) ;
+	FunctionMinimum min = mn() ;
 
-    //Status report
-    if (min.IsValid()) std::cout << "Fit success"         << std::endl ;
-    else               std::cout << "Fit failed"   << std::endl ;
-    std::cout << "Total time: " << total_timeTaken.total_seconds() << std::endl ;
-    std::cout << "MINIMIZATION OUTCOME: " <<  min  << std::endl ;
+	//Status report
+	if (min.IsValid()) std::cout << "Fit success"         << std::endl ;
+	else               std::cout << "Fit failed"   << std::endl ;
+	std::cout << "Total time: " << total_timeTaken.total_seconds() << std::endl ;
+	std::cout << "MINIMIZATION OUTCOME: " <<  min  << std::endl ;
 
-    //Get the fitting parameters
-    for (Int_t i=0; i<parIni.size();i++) {
-      parIni[i]=min.UserState().Value(i);
-      parErr[i]=min.UserState().Error(i);
-    }
+	//Release parameter 3 and 0, minimize again
+	//upar.SetValue(0, min.UserState().Value(0) ) ;
+	//upar.SetValue(3, min.UserState().Value(3) ) ;
+	//upar.Release(0) ; upar.Release(3) ;
+	//MnMigrad mnr( *fit , upar ) ;
+	//min = mnr() ;
 
-    //Calculate TCT pulses with the fit output parameters
-    for (uint i = 0; i < num_threads; ++i) {
-	    t[i] = std::thread(call_from_thread_NeffPar, i, parIni);
-    }
+	//Status report
+	if (min.IsValid()) std::cout << "Fit success"         << std::endl ;
+	else               std::cout << "Fit failed"   << std::endl ;
+	std::cout << "Total time: " << total_timeTaken.total_seconds() << std::endl ;
+	std::cout << "MINIMIZATION OUTCOME: " <<  min  << std::endl ;
 
-    for (int i = 0; i < num_threads; ++i) {
-	    t[i].join();
-    }
+	//Get the fitting parameters
+	for (uint i=0; i<parIni.size();i++) {
+		parIni[i]=min.UserState().Value(i);
+		parErr[i]=min.UserState().Error(i);
+	}
 
-    //Dump tree to disk
-    TFile fout("output.root","RECREATE") ;
-    TTree *tout = new TTree("edge","Fitting results");
+	//Calculate TCT pulses with the fit output parameters
+	for (int i = 0; i < num_threads; ++i) {
+		t[i] = std::thread(call_from_thread_NeffPar, i, parIni);
+	}
 
-    TMeas *emo = new TMeas( );
-    emo->Nt   = TRACSsim[0]->GetnSteps() ;
-    emo->volt = new Double_t [emo->Nt] ;
-    emo->time = new Double_t [emo->Nt] ;
-    emo->Qt   = new Double_t [emo->Nt] ;
+	for (int i = 0; i < num_threads; ++i) {
+		t[i].join();
+	}
 
-    // Create branches
-    tout->Branch("raw", &emo,32000,0);
+	//Dump tree to disk
+	TFile fout("output.root","RECREATE") ;
+	TTree *tout = new TTree("edge","Fitting results");
 
-    //Read RAW file
-    TRACSsim[0]->DumpToTree( emo , tout ) ;
+	TMeas *emo = new TMeas( );
+	emo->Nt   = TRACSsim[0]->GetnSteps() ;
+	emo->volt = new Double_t [emo->Nt] ;
+	emo->time = new Double_t [emo->Nt] ;
+	emo->Qt   = new Double_t [emo->Nt] ;
 
-    //TRACSsim[0]->GetTree( tsim );
-    fout.Write();
-    delete tout ;
-    fout.Close();
-    delete emo ;
+	// Create branches
+	tout->Branch("raw", &emo,32000,0);
 
-    //Clean
-    for (int i = 0; i < TRACSsim.size(); i++)	{
-       delete TRACSsim[i];
-    }
+	//Read RAW file
+	TRACSsim[0]->DumpToTree( emo , tout ) ;
 
-    delete fit;
-    std::quick_exit(1);
+	//TRACSsim[0]->GetTree( tsim );
+	fout.Write();
+	delete tout ;
+	fout.Close();
+	delete emo ;
+
+	//Clean
+	for (uint i = 0; i < TRACSsim.size(); i++)	{
+		delete TRACSsim[i];
+	}
+
+	delete fit;
+	std::quick_exit(1);
 }
 
 //_____________________________________________________________________
-
+/**
+ *
+ * @param par
+ * @return
+ */
 Double_t TRACSFit::operator() ( const std::vector<Double_t>& par  ) const {
 
 	static int icalls ;
 	boost::posix_time::ptime start = boost::posix_time::second_clock::local_time();
 
-	for (uint i = 0; i < num_threads; ++i) {
+	for (int i = 0; i < num_threads; ++i) {
 		t[i] = std::thread(call_from_thread_NeffPar, i, par);
 	}
 
@@ -174,22 +187,22 @@ Double_t TRACSFit::operator() ( const std::vector<Double_t>& par  ) const {
 		t[i].join();
 	}
 
-    Double_t chi2 = fit->LeastSquares( ) ;
-    boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
-    boost::posix_time::time_duration timeTaken = end - start;
-    total_timeTaken += timeTaken;
+	Double_t chi2 = fit->LeastSquares( ) ;
+	boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
+	boost::posix_time::time_duration timeTaken = end - start;
+	total_timeTaken += timeTaken;
 
 	std::cout << "-------------------------------------------------------------------------------------> " << std::endl;
 	std::cout << "----------------------------> Time taken for chi2 calculation (milliseconds): " << timeTaken.total_milliseconds() << std::endl;
 	std::cout << "-------------------------------------------------------------------------------------> " << std::endl;
 	std::cout << "----------------------------> icalls="<<icalls<<" chi2=" << chi2 << "\t" ;
-	for (Int_t ipar=0 ; ipar<par.size() ; ipar++) std::cout << "p["<<ipar<<"]="<<par[ipar]<<"\t" ; std::cout << std::endl;
+	for (uint ipar=0 ; ipar<par.size() ; ipar++) std::cout << "p["<<ipar<<"]="<<par[ipar]<<"\t" ; std::cout << std::endl;
 	std::cout << "-------------------------------------------------------------------------------------> " << std::endl;
 	icalls++;
 
-    for (int i = 0; i < TRACSsim.size(); i++)	{
-    	    delete TRACSsim[i];
-    }
+	for (uint i = 0; i < TRACSsim.size(); i++)	{
+		delete TRACSsim[i];
+	}
 
 	return chi2 ;
 
