@@ -1,27 +1,49 @@
+/*****This code is property of CERN and IFCA under GPL License. Developed by: Marcos Fernandez, Pablo de Castro, Alvaro Diez, Urban Senica and Julio Calvo.*****/
+
+/************************************CARRIER***********************************
+ *
+ * One of the most important classes fo the program, used for instansciate every carrier read from the file.
+ * Each carrier is treated independently, calculating its position, diffusion and drifting, then, its contribution to the global induced current is taken into account.
+ *
+ * Carriers have different properties like carrier_type (e or h), trapping time, etc...
+ *
+ */
+
 #include "Carrier.h"
 
 std::mutex mtn;
+
 /*
  * Constructor for Carrier.cpp that sets and stores the values given in their respective places.
  *
+ *
+ *
+ */
+/**
+ * @param carrier_type
+ * @param q
+ * @param x_init
+ * @param y_init
+ * @param detector
+ * @param gen_time
  */
 Carrier::Carrier( char carrier_type, double q,  double x_init, double y_init , SMSDetector * detector, double gen_time = 1.e-9):
 
-_carrier_type(carrier_type), // Charge carrier(CC)  type. Typically  electron/positron
-_q(q), //Charge in electron units. Always positive.
-_gen_time(gen_time), // Instant of CC generation
-_detector(detector), // Detector type and characteristics
-//	_electricField(_detector->get_d_f_grad(),
-//	_weightingField(_detector->get_w_f_grad(),
-_myTemp(_detector->get_temperature()), // Temperature of the diode
-_drift(_carrier_type, detector->get_d_f_grad(), _myTemp, _detector->diffusionON(), _detector->get_dt()), // Carrier Transport object
-_mu(_carrier_type, _myTemp),// Mobility of the CC
-diffDistance(0.),
-_trapping_time(_detector->get_trapping_time()),
-_dx(0.),
-_dy(0.),
-_e_field_mod(0.),
-_crossed(false)
+				_carrier_type(carrier_type), // Charge carrier(CC)  type. Typically  electron/positron
+				_q(q), //Charge in electron units. Always positive.
+				_dy(0.),
+				_dx(0.),
+				_gen_time(gen_time), // Instant of CC generation
+				_e_field_mod(0.),
+				_detector(detector), // Detector type and characteristics
+				//	_electricField(_detector->get_d_f_grad(),
+				//	_weightingField(_detector->get_w_f_grad(),
+				_myTemp(_detector->get_temperature()), // Temperature of the diode
+				_drift(_carrier_type, detector->get_d_f_grad(), _myTemp, _detector->diffusionON(), _detector->get_dt()), // Carrier Transport object
+				_mu(_carrier_type, _myTemp),// Mobility of the CC
+				_trapping_time(_detector->get_trapping_time()),
+				diffDistance(0.),
+				_crossed(false)
 
 {
 
@@ -40,17 +62,18 @@ _crossed(false)
 
 
 /*Diffusion method: When calling obtain_mobility method, the _mu object has been instanciated knowing whether it is a H or an E.
- * Thus, both obtain_mobility are the same instruction but with different variables.
- * The result of the diffusion is added to each particle before calculating the induced current.
+ * Thus, both obtain_mobility are the same method but with different variables.
+ * The result of the diffusion is added to both coordenates Z(Y) and X modifying the position of the carrier.
  *
+ */
+/**
  *
+ * @param dt
  */
 void Carrier::calculateDiffusionStep(double dt){
 
-	//No electric field outside depleted area.
 	TRandom3 Rand(0);
-	//Becker Thesis, pag. 50. Lutz book, pag 18. Ejercicio de Lutz, pag. 36.
-	//diffDistance = pow(2*(1440*cm*cm/(V*s))*kB*_myTemp/(ECH)*dt,0.5) /** 1e6*/ ;
+
 	diffDistance = pow(2*_mu.obtain_mobility(_e_field_mod)*kB*_myTemp/(ECH)*dt,0.5);
 	_dx = diffDistance * Rand.Gaus(0,1);
 	_dy = diffDistance * Rand.Gaus(0,1);
@@ -58,9 +81,11 @@ void Carrier::calculateDiffusionStep(double dt){
 	_x[0] += _dx;
 	_x[1] += _dy;
 
+	/*Becker Thesis, pag. 50. Lutz book, pag 18. Ejercicio de Lutz, pag. 36.
+	diffDistance = pow(2*(1440*cm*cm/(V*s))*kB*_myTemp/(ECH)*dt,0.5);
 
-	//Other approach could be following MCTSi, Tim Janssen
-	//diff = sqrt(2*coefficientElectron*dt) * sin(2*pi*gRandom.Uniform()) * sqrt(-2*log(gRandom.Uniform()));
+	Other approach could be following MCTSi, Tim Janssen
+	diff = sqrt(2*coefficientElectron*dt) * sin(2*pi*gRandom.Uniform()) * sqrt(-2*log(gRandom.Uniform()));*/
 
 
 }
@@ -68,20 +93,25 @@ void Carrier::calculateDiffusionStep(double dt){
 
 /*
  ******************** CARRIER DRIFT SIMULATION METHOD**************************
- * --Overloaded--
  *
  * Simulates how the CC drifts inside the detector in the 
  * desired number of steps
  *
  */
-//USED
+/**
+ *
+ * @param dt
+ * @param max_time
+ * @param x_init
+ * @param y_init
+ * @return
+ */
 std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double x_init, double y_init )
 {
 	_x[0] = x_init;
 	_x[1] = y_init;
 
 	bool regularCarrier = true;
-	double t = 0.;
 	double tDiff=0.;
 	double tDep = 0;
 
@@ -147,7 +177,6 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 				i_n[i] = _q *_sign* _mu.obtain_mobility(_e_field_mod) * (_e_field[0]*_w_field[0] + _e_field[1]*_w_field[1]);
 
 				stepper.do_step(_drift, _x, tDep, dt); //Carrier movement due to drift
-							//}
 				// Trapping effects due to radiation-induced defects (traps) implemented in CarrierColleciton.cpp
 			}
 			tDep+=dt;
@@ -169,7 +198,10 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 /*
  * Getter for the type of the CC (electro / hole)
  */
-
+/**
+ *
+ * @return
+ */
 char Carrier::Carrier::get_carrier_type()
 {
 	return _carrier_type; // electron or hole
@@ -238,13 +270,6 @@ Carrier::Carrier(const Carrier& other)
 	_dy = other._dy;
 	diffDistance = other.diffDistance;
 	_crossed = other._crossed;
-	//_dep_width = other._dep_width;
-	//_xMax = other._xMax;
-	//_xMin = other._xMin;
-	//_yMax = other._yMax;
-	//_yMin = other._yMin;
-	//_electricField = other.//_electricField;
-	//_weightingField = other._weightingField;
 	std::lock_guard<std::mutex> lock(other.safeRead);
 }
 
@@ -272,13 +297,6 @@ Carrier& Carrier::operator = (const Carrier& other)
 	_dy = other._dy;
 	diffDistance = other.diffDistance;
 	_crossed = other._crossed;
-	//_dep_width = other._dep_width;
-	//_xMax = other._xMax;
-	//_xMin = other._xMin;
-	//_yMax = other._yMax;
-	//_yMin = other._yMin;
-	//_electricField = other._electricField;
-	//_weightingField = other._weightingField;
 	return *this;
 }
 
@@ -305,13 +323,6 @@ Carrier::Carrier(Carrier&& other)
 	_dy = std::move(other._dy);
 	diffDistance = std::move(other.diffDistance);
 	_crossed = std::move(other._crossed);
-	//_dep_width = std::move(other._dep_width);
-	//_xMax = std::move(other._xMax);
-	//_xMin = std::move(other._xMin);
-	//_yMax = std::move(other._yMax);
-	//_yMin = std::move(other._yMin);
-	//_electricField = std::move(_electricField);
-	//_weightingField = std::move(_weightingField);
 	std::lock_guard<std::mutex> lock(other.safeRead);
 }
 
@@ -355,13 +366,5 @@ Carrier& Carrier::operator = ( Carrier&& other)
 	other.diffDistance = 0.;
 	_crossed = std::move(other._crossed);
 	other._crossed = false;
-	//_dep_width = std::move(other._dep_width);
-	//_xMax = std::move(other._xMax);
-	//_xMin = std::move(other._xMin);
-	//_yMax = std::move(other._yMax);
-	//_yMin = std::move(other._yMin);
-	//_electricField = std::move(_electricField);
-	//_weightingField = std::move(_weightingField);
-	//other._trapping_time = 1e300;
 	return *this;
 }

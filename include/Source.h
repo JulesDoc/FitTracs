@@ -6,9 +6,7 @@
  * This class contains the source term for the poisson equation
  * Space charge distribution is to be parametrized here.
  *
- * At the moment only one space charge distribution is implemented 
- * but many more may come in the future together with a way for the 
- * user to select which one to use.
+ *
  */
  class Source : public Expression
  {

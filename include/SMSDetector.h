@@ -1,3 +1,5 @@
+/*****This code is property of CERN and IFCA under GPL License. Developed by: Marcos Fernandez, Pablo de Castro, Alvaro Diez, Urban Senica and Julio Calvo.*****/
+
 #ifndef SMSDETECTOR_H
 #define SMSDETECTOR_H
 
@@ -29,11 +31,6 @@ private:
 	char _implant_type; // n or p
 	std::string _neff_type;
 	std::vector<double> _neff_param; // Neff parametrization
-	double _vdep; // depletion voltage
-	int _diffusion; //If diffusion is ON by user. 0 for NO, 1 for YES
-	double depletion_width;
-	double _dt;
-
 
 	// some useful derived variables
 	double _x_min; // in microns
@@ -41,16 +38,28 @@ private:
 	double _y_min; // in microns
 	double _y_max; // in microns
 
+	double _vdep; // depletion voltage
+	// bias
+	double _v_backplane;
+	double _v_strips;
+
+	// poisson term for solving electric field
+	double _f_poisson;
+
+	//Variables used for diffusion
+	int _diffusion; //If diffusion is ON by user. 0 for NO, 1 for YES
+	double depletion_width;
+	double _dt;
+
+
+
+
 	// Meshing parameters
 	int _n_cells_x;
 	int _n_cells_y;
 
-	// bias
-	double _v_strips;
-	double _v_backplane;
 
-	// poisson term for solving electric field
-	double _f_poisson;
+
 
 	// meshes (one for each could be used)
 	RectangleMesh _mesh; // mesh for both weighing and drifing potential

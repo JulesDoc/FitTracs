@@ -1,8 +1,20 @@
+/*****This code is property of CERN and IFCA under GPL License. Developed by: Marcos Fernandez, Pablo de Castro, Alvaro Diez, Urban Senica and Julio Calvo.*****/
+
+/************************************SMSSubDomains***********************************
+ *
+ *
+ *
+ */
 #include <SMSDSubDomains.h>
 
 using namespace dolfin;
 
-
+/**
+ *
+ * @param pitch
+ * @param width
+ * @param nns
+ */
 CentralStripBoundary::CentralStripBoundary(double pitch, double width, int nns )
 {
   _pitch = pitch;
@@ -10,6 +22,12 @@ CentralStripBoundary::CentralStripBoundary(double pitch, double width, int nns )
   _nns = nns;
 }
 
+/**
+ *
+ * @param x
+ * @param on_boundary
+ * @return
+ */
 bool CentralStripBoundary::inside(const Array<double>& x, bool on_boundary) const
 {
   bool is_inside = false;
@@ -25,14 +43,24 @@ bool CentralStripBoundary::inside(const Array<double>& x, bool on_boundary) cons
   }
   return is_inside;
 }
-
+/**
+ *
+ * @param pitch
+ * @param width
+ * @param nns
+ */
 NeighbourStripBoundary::NeighbourStripBoundary(double pitch, double width, int nns )
 {
   _pitch = pitch;
   _width = width;
   _nns = nns;
 }
-
+/**
+ *
+ * @param x
+ * @param on_boundary
+ * @return
+ */
 bool NeighbourStripBoundary::inside(const Array<double>& x, bool on_boundary) const
 {
   bool is_inside = false;
@@ -55,7 +83,12 @@ bool NeighbourStripBoundary::inside(const Array<double>& x, bool on_boundary) co
   }
   return is_inside;
 }
-
+/**
+ *
+ * @param x_min
+ * @param x_max
+ * @param depth
+ */
 BackPlaneBoundary::BackPlaneBoundary(double x_min, double x_max, double depth)
 {
   _x_min = x_min;
@@ -75,14 +108,24 @@ bool BackPlaneBoundary::inside(const Array<double>& x, bool on_boundary) const
   }
   return is_inside;
 }
-
+/**
+ *
+ * @param x_min
+ * @param x_max
+ * @param depth
+ */
 PeriodicLateralBoundary::PeriodicLateralBoundary(double x_min, double x_max, double depth)
 {
   _x_min = x_min;
   _x_max = x_max;
   _depth = depth;
 }
-
+/**
+ *
+ * @param x
+ * @param on_boundary
+ * @return
+ */
 // Left boundary is "target domain"
 bool PeriodicLateralBoundary::inside(const Array<double>& x, bool on_boundary) const
 {
@@ -90,6 +133,11 @@ bool PeriodicLateralBoundary::inside(const Array<double>& x, bool on_boundary) c
 }
 
 // Map right boundary to left boundary
+/**
+ *
+ * @param x
+ * @param y
+ */
 void PeriodicLateralBoundary::map(const Array<double>& x, Array<double>& y) const
 {
   y[0] = x[0] - _x_max; //translate x coordinate

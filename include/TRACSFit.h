@@ -26,7 +26,7 @@
 
 #include <TMeas.h>
 #include <TWaveform.h>
-#include <threading.h>
+#include <Threading.h>
 #include <TRACSInterface.h>
 
 
@@ -92,7 +92,7 @@ class TRACSFit : public ROOT::Minuit2::FCNBase {
 
      TString how ;          //Something like "Vbias==-80 && (z>0.05 && z<0.25)"
 
-     std::string file_conf = "Config.TRACS";
+     //std::string file_conf = "Config.TRACS";
      //std::vector<TRACSInterface> * sim = nullptr ;  //Object holding the simulation of TRACS
 
      /* Measurement   and  Simulation TREEs info */

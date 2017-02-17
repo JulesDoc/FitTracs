@@ -1,3 +1,5 @@
+/*****This code is property of CERN and IFCA under GPL License. Developed by: Marcos Fernandez, Pablo de Castro, Alvaro Diez, Urban Senica and Julio Calvo.*****/
+
 #ifndef TRACSINTERFACE_H
 #define TRACSINTERFACE_H
 
@@ -23,10 +25,10 @@
 
 #include <SMSDetector.h>
 #include <Source.h>
-#include <utilities.h>
+#include <Utilities.h>
 #include <Carrier.h>
 #include <CarrierCollection.h>
-#include <global.h>
+#include <Global.h>
 
 
 
@@ -81,10 +83,10 @@ private:
 	//int num_threads;
 
 
-	int n_par0;
-	int n_par1;
-	int n_par2;
-	std::vector<int> params = {0, 0, 0};
+	uint n_par0;
+	uint n_par1;
+	uint n_par2;
+	std::vector<uint> params = {0, 0, 0};
 	int tcount;
 	int count1, count2, count3;
 

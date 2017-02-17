@@ -1,27 +1,18 @@
-/*
- * DoTracsOnly.cpp
+/*****This code is property of CERN and IFCA under GPL License. Developed by: Marcos Fernandez, Pablo de Castro, Alvaro Diez, Urban Senica and Julio Calvo.*****/
+
+/************************************DoTRACSOnly***********************************
  *
- *  Created on: Nov 9, 2016
- *      Author: jcalvopi
+ * Basic main TRACS execution which gives back the Neff of a defined detector and some extra information related to diffusion, if swithed ON.
+ *
  */
 
-
-/*
-  Example
-
-    DoTRACSFit MeasurementFile TRACS.conf "Vbias==200 && Tset == 20"
-
- */
-
-//#include <TApplication.h>
 #include <thread>
 #include <boost/asio.hpp>
-#include <threading.h>
-
 #include <TRACSFit.h>
 #include <TRACSInterface.h>
 #include <TString.h>
 #include <stdio.h>
+#include "../include/Threading.h"
 
 std::vector<TRACSInterface*> TRACSsim;
 std::vector<std::thread> t;
@@ -29,19 +20,15 @@ std::vector<std::thread> t;
 
 int main( int argc, char *argv[]) {
 
-	if(argc==1)
-	{
+	if(argc==1){
 		num_threads = std::thread::hardware_concurrency(); // No. of threads = No. of cores
 	}
 	else num_threads = atoi(argv[1]);
-
 	if (num_threads == 0){
-
 		num_threads = 1;
 	}
-	//numberDs = 0;
 
-	//This to fix the number of threads with the maximum number possible in the system and in addition with a number chosen by the user. It is possible that the number of threads launched do not match
+	//These lines turn the number of threads to the maximum number of machine cores but taking into account the number of threads pointed by the user. It is possible that the number of threads launched do not match
 	//with the array of steps, then it breaks. It can be commented if the user want to control it by himself. When commented, start the thread loop from 0 instead of from 1!!.
 
 	/*TRACSsim.resize(num_threads);
@@ -52,7 +39,7 @@ int main( int argc, char *argv[]) {
 
 	TRACSsim.resize(num_threads);
 	t.resize(num_threads);
-	for (uint i = 0; i < num_threads; ++i) {
+	for (int i = 0; i < num_threads; ++i) {
 		t[i] = std::thread(call_from_thread, i);
 	}
 	for (int i = 0; i < num_threads; ++i) {
@@ -80,7 +67,7 @@ int main( int argc, char *argv[]) {
 	//End Neff show
 
 	//Clean
-	for (int i = 0; i < TRACSsim.size(); i++)	{
+	for (uint i = 0; i < TRACSsim.size(); i++)	{
 		delete TRACSsim[i];
 	}
 
@@ -88,6 +75,11 @@ int main( int argc, char *argv[]) {
 }
 
 //-----------
+/**
+ *
+ * @param par
+ * @return
+ */
 Double_t TRACSFit::operator() ( const std::vector<Double_t>& par  ) const {
 
 	return 0;

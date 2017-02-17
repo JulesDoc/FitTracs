@@ -1,3 +1,5 @@
+/*****This code is property of CERN and IFCA under GPL License. Developed by: Marcos Fernandez, Pablo de Castro, Alvaro Diez, Urban Senica and Julio Calvo.*****/
+
 #include <TRACSFit.h>
 
 #include <cmath>
@@ -11,6 +13,10 @@ ClassImp(TWaveform)
 extern std::vector<TRACSInterface*> TRACSsim;
 extern std::vector<std::thread> t;
 /* Default constructor, see ROOT manual page 270 */
+
+/**
+ *
+ */
 TRACSFit::TRACSFit() {
 	imaxs = 0;
 	imaxm = 0;
@@ -39,7 +45,12 @@ TRACSFit::TRACSFit() {
 	emh = 0;
 	emhs = 0;
 }
-
+/**
+ *
+ * @param FileMeas
+ * @param FileConf
+ * @param howstr
+ */
 TRACSFit::TRACSFit( TString FileMeas , TString FileConf ,  TString howstr ) {
 
 	//Create simulation tree
@@ -208,7 +219,7 @@ Double_t TRACSFit::LeastSquares( ) {
     timem.resize(ntm);
     voltm.resize(ntm);
 	Double_t chi2 = 0.;
-	Int_t Nt_iterm = imaxm - iminm + 1 ;
+	//Int_t Nt_iterm = imaxm - iminm + 1 ;
 	for ( Int_t ii=0 ; ii < Nevm ; ii++ ) {
 
 		//Retrieve simulated waveform fulfilling condition "how"
@@ -250,7 +261,11 @@ Double_t TRACSFit::LeastSquares( ) {
 }
 
 //---------------------------------------------------------------------------
-
+/**
+ *
+ * @param hsim
+ * @param hmeas
+ */
 void TRACSFit::MinimumCommonHistogram( TH1D *hsim, TH1D *hmeas ) {
 
 	/*

@@ -1,17 +1,21 @@
+/*****This code is property of CERN and IFCA under GPL License. Developed by: Marcos Fernandez, Pablo de Castro, Alvaro Diez, Urban Senica and Julio Calvo.*****/
+
+/*Test program to test the modularization and independency calling of the main function of TRACS*/
+
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
 #include <vector>
 #include <thread>
 
-//#include "libreriaPi.h"
+
 #include <TRACSInterface.h>
-#include <threading.h>
-//#include <global.h>
+#include "../include/Threading.h"
+
 
 std::vector<TRACSInterface*> TRACSsim;
 std::vector<std::thread> t;
-//std::vector<TRACSInterface*> TRACSsim;
+
 
 int main(int argc, char *argv[])
 {

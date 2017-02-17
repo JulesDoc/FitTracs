@@ -1,25 +1,34 @@
-#include <TRACSInterface.h>
-#include <mutex>          // std::mutex
-/*
- * Constructor of class TRACSInterface
- * it takes the configuration file path as the only input and gets the 
- * rest of the data from said file
+/*****This code is property of CERN and IFCA under GPL License. Developed by: Marcos Fernandez, Pablo de Castro, Alvaro Diez, Urban Senica and Julio Calvo.*****/
+
+/************************************TRACSInterface***********************************
  *
- * This class provides a modular interface to TRACS simulator via 
- * different methods that allows the user to leverage all TRACS 
- * functionalities with their own code and use TRACS as a library for 
- * silicon detectors simulation.
+ * High-level class used as interface between files and functionalities.
  *
  */
 
+
+#include <TRACSInterface.h>
+#include <mutex>          // std::mutex
+
+
 std::mutex mtx2;
 
+/*
+ * The constructor mainly initializes all the values that will be used during the execution. Firstly it read most of them from the steering file by means of a parsing method inside utilities class.
+ * Another important task carrying out here is the definition of the vectors and coordinates. Vectors to store currents and coordinates to define the scanning, positions, steps...
+ * When the information is set up, a new instance of a detector can be launched, one per TRACSInterface object, avoiding data races and concurrent access to same positions memory when solving field equations in the
+ * detector. Making copy constructor and passing copies of detector instances is expensive for the program and do not work, neither improve the performance. Same behavior is used with the current collection.
+ * The only global variable shared by threads is the one that stores the total induce current vItotals, but it is important to note that threads access uniquely to their tid position in the vector.
+ */
+/**
+ *
+ * @param filename
+ */
 TRACSInterface::TRACSInterface(std::string filename)
 {
 	neff_param = std::vector<double>(8,0);
 	total_crosses = 0;
-	//utilities::parse_config_file(filename, carrierFile, depth, width, pitch, nns, temp, trapping, fluence, n_cells_x, n_cells_y, bulk_type, implant_type,
-	//C, dt, max_time, vBias, vDepletion, zPos, yPos, neff_param, neffType);
+
 	utilities::parse_config_file(filename, carrierFile, depth, width,  pitch, nns, temp, trapping, fluence, nThreads, n_cells_x, n_cells_y, bulk_type,
 			implant_type, waveLength, scanType, C, dt, max_time, vInit, deltaV, vMax, vDepletion, zInit, zMax, deltaZ, yInit, yMax, deltaY, neff_param, neffType,
 			tolerance, chiFinal, diffusion);
@@ -36,18 +45,17 @@ TRACSInterface::TRACSInterface(std::string filename)
 		start = "irrad";
 	}
 
-
 	n_zSteps = (int) std::floor((zMax-zInit)/deltaZ); // Simulation Steps
 	n_zSteps1 = n_zSteps / 2;
 	n_zSteps2 = (int) std::floor (n_zSteps - n_zSteps1);
+
 	// if more threads than points
 	if(num_threads>n_zSteps+1)
 	{
 		num_threads = n_zSteps+1;
 		std::cout << "No. of threads > No. of z points! reducing No. of threads to."<< num_threads << std::endl;
-		//exit(EXIT_FAILURE);
 	}
-	//std::cout << "Diffusion: "<< diffusion << std::endl;
+
 	n_zSteps_array = (int) std::floor ((n_zSteps+1) / num_threads);
 	n_zSteps_iter = (int) std::round ((n_zSteps+1) / (num_threads)*1.0);
 	n_vSteps = (int) std::floor((vMax-vInit)/deltaV);
@@ -60,16 +68,11 @@ TRACSInterface::TRACSInterface(std::string filename)
 	stepZ = std::to_string((int) std::floor(deltaZ));
 	stepY = std::to_string((int) std::floor(deltaY));
 	cap = std::to_string((int) std::floor(C*1.e12));
-	//std::string z_step  = std::to_string((int) std::floor(deltaZ));
 	voltage = std::to_string((int) std::floor(vInit));
 
 	parameters["allow_extrapolation"] = true;
 
 	detector = new SMSDetector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType, diffusion, dt);
-	//SMSDetector detector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType);
-	//detector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType);
-	//detector = new SMSDetector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType):
-	//pDetector = &detector;
 
 	n_tSteps = (int) std::floor(max_time / dt);
 
@@ -119,7 +122,7 @@ TRACSInterface::TRACSInterface(std::string filename)
 
 	for (int i = 0; i < num_threads; i++)
 	{	l = i;
-	for (int j = 0; j < z_shifts_array[i].size(); j++ )
+	for (uint j = 0; j < z_shifts_array[i].size(); j++ )
 	{
 		z_shifts_array[i][j] = z_shifts[l];
 		l+=num_threads;
@@ -140,7 +143,7 @@ TRACSInterface::TRACSInterface(std::string filename)
 	i_conv  = NULL;
 
 }
-// Reads values, initializes detector
+
 
 // Destructor
 TRACSInterface::~TRACSInterface()
@@ -153,7 +156,7 @@ TRACSInterface::~TRACSInterface()
 }
 
 /*
- * Convert i_total to TH1D
+ * Convert i_total to TH1D. ROOT based method.
  */
 TH1D * TRACSInterface::GetItRamo()
 {
@@ -182,7 +185,7 @@ TH1D * TRACSInterface::GetItRamo()
 }
 
 /*
- * Convert i_total to TH1D after simulating simple RC circuit
+ * Convert i_total to TH1D after simulating simple RC circuit. ROOT based method.
  */
 TH1D * TRACSInterface::GetItRc()
 {
@@ -214,7 +217,7 @@ TH1D * TRACSInterface::GetItRc()
 }
 
 /*
- * Convert i_total to TH1D after convolution with the amplifier TransferFunction
+ * Convert i_total to TH1D after convolution with the amplifier TransferFunction. ROOT based method.
  */
 TH1D * TRACSInterface::GetItConv()
 {
@@ -264,19 +267,13 @@ void TRACSInterface::simulate_ramo_current()
  * again before simulating any current. Note that different neff parametrizations 
  * use different parameters so not all may be used at once.
  */
+/**
+ *
+ * @param newParam
+ */
 void TRACSInterface::set_NeffParam(std::vector<double> newParam)
 {
-	//TODO: This method is superflous, all can be done in one line.
-	//if ( newParam.size() == 8)
-	//{
-	//	neff_param.assign(std::begin(newParam), std::end(newParam));
-	//}
-	//else
-	//{
-	//	std::cout << "Error setting up new Neff, incorrect number of parameters" << std::endl;
-	//}
 
-	//detector->set_neff_param(neff_param);
 	detector->set_neff_param(newParam);
 
 }
@@ -353,6 +350,10 @@ UShort_t TRACSInterface::GetSecond(){
  * Remember that the trapping time must be a positive number.
  * The smaller the trapping time the bigger the signal loss.
  */
+/**
+ *
+ * @param newTrapTime
+ */
 void TRACSInterface::set_trappingTime(double newTrapTime)
 {
 	trapping = newTrapTime;
@@ -365,6 +366,10 @@ void TRACSInterface::set_trappingTime(double newTrapTime)
  * the detector they will not produce current. This is relevant mainly for 
  * edge-TCT simulations.
  */
+/**
+ *
+ * @param newZPos
+ */
 void TRACSInterface::set_zPos(double newZPos)
 {
 	zPos = newZPos;
@@ -375,6 +380,10 @@ void TRACSInterface::set_zPos(double newZPos)
  * position in the file read by TRACS. Note that if the carriers are not inside 
  * the detector they will not produce current. This is used to center the red 
  * pulse in redTCT and to center the focus in TPA and edgeTCT
+ */
+/**
+ *
+ * @param newYPos
  */
 void TRACSInterface::set_yPos(double newYPos)
 {
@@ -389,6 +398,10 @@ void TRACSInterface::set_yPos(double newYPos)
  * Sets bias voltages in the detector, fields should be recalculated again 
  * before simulating any transients
  */
+/**
+ *
+ * @param newVBias
+ */
 void TRACSInterface::set_vBias(double newVBias)
 {
 	vBias = newVBias;
@@ -399,6 +412,10 @@ void TRACSInterface::set_vBias(double newVBias)
  * Sets a number (current thread).
  * Used to index the different output files 
  *
+ */
+/**
+ *
+ * @param tid
  */
 void TRACSInterface::set_tcount(int tid)
 {
@@ -414,8 +431,7 @@ void TRACSInterface::set_tcount(int tid)
 void TRACSInterface::calculate_fields()
 {
 	// Get detector ready
-	//SMSDetector detector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType);
-	//pDetector = &detector;
+
 	detector->solve_w_u();
 	detector->solve_d_u();
 	detector->solve_w_f_grad();
@@ -429,6 +445,10 @@ void TRACSInterface::calculate_fields()
  * Linear, Triconstant. More information on this three parametrizarions can
  * be found in the documentation (Config.TRACS and README.md)
  */
+/**
+ *
+ * @param newParametrization
+ */
 void TRACSInterface::set_neffType(std::string newParametrization)
 {
 	neffType = newParametrization;
@@ -440,51 +460,33 @@ void TRACSInterface::set_neffType(std::string newParametrization)
  * Allows the user to select a new carrier distribution from a file that
  * complies with the TRACS format. 
  */
+/**
+ *
+ * @param newCarrFile
+ */
 void TRACSInterface::set_carrierFile(std::string newCarrFile)
 {
 	QString carrierFileName = QString::fromUtf8(newCarrFile.c_str());
 	carrierCollection->add_carriers_from_file(carrierFileName);
 }
 
-/*
- * Returns the pointer
- * to the TRACS simulated tree 
+/**
  *
- */
-//TTree * GetTree(){}
-
-/*
- * MULTITHREADING 
- *A loop through all three parameters
- *	"v": voltage, "z": z-axis, "y": y-axis
- *	example: TRACSsim->loop_on("x","v","y");
- * 
+ * @param tid
  */
 void TRACSInterface::loop_on(int tid)
 {
 
-	//params[0] = 0; //zPos
-	//params[1] = 0; //yPos;
-	//params[2] = 0; //vPos;
-	//uint vPos = 0;
-	//uint yPos = 0;
-	//uint zPos = 0;
 
-	//n_par0 = (int) z_shifts_array[tid].size()-1;
-	//n_par0 = n_zSteps_array;
-	//n_par1 = n_ySteps;
-	//n_par2 = n_vSteps;
-	//loop
-	/*for (params[2] = 0; params[2] < n_par2 + 1; params[2]++)*/
-	for (uint vPos = 0; vPos < n_vSteps + 1; vPos++)
+	for (int vPos = 0; vPos < n_vSteps + 1; vPos++)
 	{
 		//vPos = Voltage steps. Normally one step is used.
 		detector->set_voltages(voltages[vPos], vDepletion);
 		mtx2.lock();
 		calculate_fields();
 		mtx2.unlock();
-		/*for (params[1] = 0; params[1] < n_par1 + 1; params[1]++)*/
-		for (uint yPos = 0; yPos < n_ySteps + 1; yPos++)
+
+		for (int yPos = 0; yPos < n_ySteps + 1; yPos++)
 		{
 			set_yPos(y_shifts[yPos]);
 			/*for (params[0] = 0; params[0] < n_par0 + 1; params[0]++)*/
@@ -492,7 +494,7 @@ void TRACSInterface::loop_on(int tid)
 			{
 
 				std::cout << "Height " << z_shifts_array[tid][zPos] << " of " << z_shifts.back()  <<  " || Y Position " << y_shifts[yPos]
-				          << " of " << y_shifts.back() << " || Voltage " << voltages[vPos] << " of " << voltages.back() << std::endl;
+																																	<< " of " << y_shifts.back() << " || Voltage " << voltages[vPos] << " of " << voltages.back() << std::endl;
 				set_zPos(z_shifts_array[tid][zPos]);
 				simulate_ramo_current();
 				GetItRc();
@@ -532,6 +534,10 @@ void TRACSInterface::loop_on(int tid)
  *
  *
  *
+ */
+/**
+ *
+ * @param tid
  */
 void TRACSInterface::write_header(int tid)
 {
@@ -583,6 +589,10 @@ void TRACSInterface::resize_array()
  *
  *
  */
+/**
+ *
+ * @param tid
+ */
 void TRACSInterface::write_to_file(int tid)
 {
 	write_header(tid);
@@ -619,7 +629,10 @@ void TRACSInterface::write_to_file(int tid)
 }
 
 /* ---------------------------------------------------------------- */
-
+/**
+ *
+ * @param tree
+ */
 void TRACSInterface::GetTree( TTree *tree ) {
 
 	//TFile *f=new TFile("test.root","RECREATE") ;
@@ -648,7 +661,11 @@ void TRACSInterface::GetTree( TTree *tree ) {
 
 }
 /*----------------------------------------------------------*/
-
+/**
+ *
+ * @param em
+ * @param tree
+ */
 void TRACSInterface::DumpToTree( TMeas *em , TTree *tree ) {
 
 	//Time information
@@ -663,9 +680,6 @@ void TRACSInterface::DumpToTree( TMeas *em , TTree *tree ) {
 	TDatime date ;
 	date.Set(yy, mm, dd, hh, mn, ss) ;
 	em->utc = date ;
-
-	//Frequency
-	Int_t Freq = 200 ;
 
 	//Total number of Scans
 
@@ -715,7 +729,7 @@ void TRACSInterface::DumpToTree( TMeas *em , TTree *tree ) {
 
 	int  iRead=0 , iactual = 1 ;
 	int  Polarity = 0 ;
-	Double_t ImA = 0., x0=0., y0=0., z0=0., t0s;
+	Double_t x0=0., y0=0., z0=0., t0s;
 	em->x = 0. ;
 	for (Int_t iloop = 0 ; iloop < NumOfScans ; iloop++ ) {
 

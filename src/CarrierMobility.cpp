@@ -1,12 +1,13 @@
+/*****This code is property of CERN and IFCA under GPL License.
+ * Developed by: Marcos Fernandez, Pablo de Castro, Alvaro Diez, Urban Senica and Julio Calvo.*****/
+
 #include "CarrierMobility.h"
 
 /*
  ******************************CARRIER MOBILITY*************************
  *
  * This function calculates the value of the mobility using data from 
- * desy experiment. The desired value is output as the return value of 
- * the "getter" method called: 'obtain_mobility' that requires the caller
- * to input the field at the desired point.
+ * desy experiment.
  *
  * Inputs: Carrier type ('e' for electrons / 'h' for holes)
  * 	   Temperature of the diode
@@ -15,11 +16,14 @@
  *
  * "Outputs": Desired mobility.
  *
- *
  * Data Source:  http://www.desy.de/~beckerj/cc/files/Thesis.pdf
  *
  */
-
+/**
+ *
+ * @param carrier_type
+ * @param T
+ */
 JacoboniMobility::JacoboniMobility( char carrier_type, double T)
 {
   _T = T;
@@ -44,11 +48,19 @@ JacoboniMobility::JacoboniMobility( char carrier_type, double T)
  * varibles initialized in the invokation.
  *
  */
-
+/**
+ *
+ * @param e_field_mod
+ * @return
+ */
 double JacoboniMobility::obtain_mobility(double e_field_mod)
 {
   return _mu0/std::pow(1.0+std::pow(_mu0*e_field_mod/_vsat,_beta), 1.0/_beta); // mum**2/ Vs
 }
+/**
+ *
+ * @return
+ */
 double JacoboniMobility::obtain_mu0(){
 
   return _mu0;

@@ -1,28 +1,29 @@
+/*****This code is property of CERN and IFCA under GPL License. Developed by: Marcos Fernandez, Pablo de Castro, Alvaro Diez, Urban Senica and Julio Calvo.*****/
+
+/************************************CARRIER COLLECTION***********************************
+ *
+ * Carrier collection get carriers information from a file and store it in a vector of carriers.
+ * This vector of carriers will be used by each of the threads in each of the steps of the TCT scan.
+ *
+ *
+ */
+
 #include <CarrierCollection.h>
 #include <CarrierMobility.h>
-
-
-// _carrier_list should be a N_thr-dimensional vector
-
-/*
- * Comments
- *
- * Simulate_drift is an overloaded function 
- * 		WATCHOUT
- */
 
 CarrierCollection::CarrierCollection(SMSDetector * detector) :
 _detector(detector)
 {
 
 }
-
-
 /*
- ********************** OVERLOADED FUNCTIONS FOR GUI COMPATIBILITY **************************
+ * Adds carriers from the file. The name of the file must be set in the steering file, in the field CarrierFile, more instructions can be found there.
+ * The calculation of average positions is neccesary for fitting purposes, DumpToTree function.
  */
-
-///USED
+/**
+ *
+ * @param filename
+ */
 void CarrierCollection::add_carriers_from_file(QString filename)
 {
 	// get char representation and make ifstream
@@ -51,16 +52,28 @@ void CarrierCollection::add_carriers_from_file(QString filename)
 		beamy = beamy / _carrier_list_sngl.size();
 		beamz = beamz / _carrier_list_sngl.size();
 	}
-	//double sizeCarriers = _carrier_list_sngl.size();
-	//std::cout << "****************************Carrier list size: "  << sizeCarriers << std::endl;
+
 }
 
-//USED
+/*
+ * From the carrier list taken from the file of carriers, this method runs through the vector of carriers and calls the simulate.drift for each one of them, depending if the carrier
+ * is a hole or an electron. Trapping effects are included at the end directly in the valarry of currents.
+ * Info related to diffusion is displayed using this method as well. Whenever a carrier crosses to depleted region, the acumulative variable totalCross grows.
+ */
+/**
+ *
+ * @param dt
+ * @param max_time
+ * @param shift_x
+ * @param shift_y
+ * @param curr_elec
+ * @param curr_hole
+ * @param totalCrosses
+ */
 void CarrierCollection::simulate_drift( double dt, double max_time, double shift_x /*yPos*/, double shift_y /*zPos*/,
 		std::valarray<double>&curr_elec, std::valarray<double> &curr_hole, int &totalCrosses)
 {
 
-	int i = 0;
 	int totalCross = 0;
 	// range for through the carriers
 	for (auto carrier : _carrier_list_sngl)
@@ -106,7 +119,14 @@ void CarrierCollection::simulate_drift( double dt, double max_time, double shift
 	}
 
 }
-
+/**
+ *
+ * @param n_bins_x
+ * @param n_bins_y
+ * @param hist_name
+ * @param hist_title
+ * @return
+ */
 TH2D CarrierCollection::get_e_dist_histogram(int n_bins_x, int n_bins_y,  TString hist_name, TString hist_title)
 {
 	// get detector limits
@@ -131,7 +151,16 @@ TH2D CarrierCollection::get_e_dist_histogram(int n_bins_x, int n_bins_y,  TStrin
 	}
 	return e_dist;
 }
-
+/**
+ *
+ * @param n_bins_x
+ * @param n_bins_y
+ * @param shift_x
+ * @param shift_y
+ * @param hist_name
+ * @param hist_title
+ * @return
+ */
 TH2D CarrierCollection::get_e_dist_histogram(int n_bins_x, int n_bins_y, double shift_x, double shift_y, TString hist_name, TString hist_title)
 {
 	// get detector limits

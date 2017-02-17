@@ -1,3 +1,5 @@
+/*****This code is property of CERN and IFCA under GPL License. Developed by: Marcos Fernandez, Pablo de Castro, Alvaro Diez, Urban Senica and Julio Calvo.*****/
+
 #ifndef CARRIER_H
 #define CARRIER_H
 
@@ -12,19 +14,17 @@
 #include <CarrierTransport.h>
 #include <SMSDetector.h>
 #include <Constants.h>
-#include <global.h>
+#include <Global.h>
 
 using namespace boost::numeric::odeint;
 //using namespace dolfin;
 
-/*
- **************************CARRIER************************
+/************************************CARRIER***********************************
  *
+ * One of the most important classes fo the program, used for instansciate every carrier read from the file.
+ * Each carrier is treated independently, calculating its position, diffusion and drifting, then, its contribution to the global induced current is taken into account.
  *
- *  Detailed Description
- *
- *
- *
+ * Carriers have different properties like carrier_type (e or h), trapping time, etc...
  *
  */
 

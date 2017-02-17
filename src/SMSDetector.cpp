@@ -1,6 +1,30 @@
+/*****This code is property of CERN and IFCA under GPL License. Developed by: Marcos Fernandez, Pablo de Castro, Alvaro Diez, Urban Senica and Julio Calvo.*****/
+
+/************************************SMSDetector***********************************
+ *
+ *
+ *
+ */
 #include <SMSDetector.h>
 #include <Source.h>
-
+/**
+ *
+ * @param pitch
+ * @param width
+ * @param depth
+ * @param nns
+ * @param bulk_type
+ * @param implant_type
+ * @param n_cells_x
+ * @param n_cells_y
+ * @param tempK
+ * @param trapping
+ * @param fluence
+ * @param neff_param
+ * @param neff_type
+ * @param diffusion
+ * @param dt
+ */
 SMSDetector::SMSDetector(double pitch, double width, double depth, int nns, char bulk_type, char implant_type, int n_cells_x, int n_cells_y, double tempK, double trapping,
 		double fluence, std::vector<double> neff_param, std::string neff_type, int diffusion, double dt) :
 
@@ -57,7 +81,13 @@ SMSDetector::SMSDetector(double pitch, double width, double depth, int nns, char
 }
 
 /*
- * Set right polarity for detector depending on the type (p-on-n/n-on-p)
+ **
+ ** Set right polarity for detector depending on the type (p-on-n/n-on-p)
+ */
+/**
+ *
+ * @param v_bias
+ * @param v_depletion
  */
 void SMSDetector::set_voltages(double v_bias, double v_depletion)
 {
@@ -70,6 +100,10 @@ void SMSDetector::set_voltages(double v_bias, double v_depletion)
 
 /*
  * Method for solving the weighting potential using Laplace triangles 
+ */
+
+/**
+ *
  */
 void SMSDetector::solve_w_u()
 {
@@ -96,7 +130,7 @@ void SMSDetector::solve_w_u()
 }
 
 /*
- * Method for solving the XXXXXXXXX d_u XXXXXXXXXXX using Poisson's equation
+ * Method for solving the XXXXXXXXX d_u (drifting potential) XXXXXXXXXXX using Poisson's equation
  */
 
 void SMSDetector::solve_d_u()
