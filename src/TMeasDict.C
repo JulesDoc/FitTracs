@@ -55,7 +55,7 @@ namespace ROOT {
       ::TMeas *ptr = 0;
       static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TMeas >(0);
       static ::ROOT::TGenericClassInfo 
-         instance("TMeas", ::TMeas::Class_Version(), "TMeas.h", 14,
+         instance("TMeas", ::TMeas::Class_Version(), "TMeas.h", 27,
                   typeid(::TMeas), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &::TMeas::Dictionary, isa_proxy, 4,
                   sizeof(::TMeas) );

@@ -56,7 +56,7 @@ namespace ROOT {
       ::TWaveform *ptr = 0;
       static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TWaveform >(0);
       static ::ROOT::TGenericClassInfo 
-         instance("TWaveform", ::TWaveform::Class_Version(), "TWaveform.h", 17,
+         instance("TWaveform", ::TWaveform::Class_Version(), "TWaveform.h", 30,
                   typeid(::TWaveform), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &::TWaveform::Dictionary, isa_proxy, 16,
                   sizeof(::TWaveform) );
