@@ -58,28 +58,28 @@ PRINT = @echo -e "\e[1;34mBuilding $<\e[0m"
 
 # define the C source files
 SDIR = src/
-SRCS = $(SDIR)DoTRACSFit.cpp $(SDIR)TRACSFit.cpp $(SDIR)CarrierCollection.cpp $(SDIR)Carrier.cpp $(SDIR)CarrierMobility.cpp $(SDIR)CarrierTransport.cpp  $(SDIR)global.cpp $(SDIR)SMSDetector.cpp $(SDIR)SMSDSubDomains.cpp $(SDIR)threading.cpp $(SDIR)TRACSInterface.cpp $(SDIR)H1DConvolution.C $(SDIR)utilities.cpp $(SDIR)TMeas.cpp $(SDIR)TWaveform.cpp $(DIR)TMeasHeader.cpp
+SRCS = $(SDIR)DoTRACSFit.cpp $(SDIR)TRACSFit.cpp $(SDIR)CarrierCollection.cpp $(SDIR)Carrier.cpp $(SDIR)CarrierMobility.cpp $(SDIR)CarrierTransport.cpp  $(SDIR)Global.cpp $(SDIR)SMSDetector.cpp $(SDIR)SMSDSubDomains.cpp $(SDIR)Threading.cpp $(SDIR)TRACSInterface.cpp $(SDIR)H1DConvolution.C $(SDIR)Utilities.cpp $(SDIR)TMeas.cpp $(SDIR)TWaveform.cpp $(DIR)TMeasHeader.cpp
 
 ODIR = obj/
-OBJ_ = DoTRACSFit.o TRACSFit.o CarrierCollection.o Carrier.o CarrierMobility.o CarrierTransport.o global.o SMSDetector.o SMSDSubDomains.o threading.o TRACSInterface.o H1DConvolution.o utilities.o TMeas.o TWaveform.o TMeasHeader.o TMeasDict.o TMeasHeaderDict.o TWaveDict.o
-OBJB_ = DoTracsOnly.o TRACSFit.o CarrierCollection.o Carrier.o CarrierMobility.o CarrierTransport.o global.o SMSDetector.o SMSDSubDomains.o threading.o TRACSInterface.o H1DConvolution.o utilities.o TMeas.o TWaveform.o TMeasHeader.o TMeasDict.o TMeasHeaderDict.o TWaveDict.o
-OBJC_ = mfgTRACSFit.o TRACSFit.o CarrierCollection.o Carrier.o CarrierMobility.o CarrierTransport.o global.o SMSDetector.o SMSDSubDomains.o threading.o TRACSInterface.o H1DConvolution.o utilities.o TMeas.o TWaveform.o TMeasHeader.o TMeasDict.o TMeasHeaderDict.o TWaveDict.o
-OBJEDGE_ = edge_tree.o TMeas.o TWaveform.o TMeasHeader.o TMeasDict.o TMeasHeaderDict.o TWaveDict.o
+OBJ_ = DoTRACSFit.o TRACSFit.o CarrierCollection.o Carrier.o CarrierMobility.o CarrierTransport.o Global.o SMSDetector.o SMSDSubDomains.o Threading.o TRACSInterface.o H1DConvolution.o Utilities.o TMeas.o TWaveform.o TMeasHeader.o TMeasDict.o TMeasHeaderDict.o TWaveDict.o
+OBJB_ = DoTracsOnly.o TRACSFit.o CarrierCollection.o Carrier.o CarrierMobility.o CarrierTransport.o Global.o SMSDetector.o SMSDSubDomains.o Threading.o TRACSInterface.o H1DConvolution.o Utilities.o TMeas.o TWaveform.o TMeasHeader.o TMeasDict.o TMeasHeaderDict.o TWaveDict.o
+OBJC_ = MfgTRACSFit.o TRACSFit.o CarrierCollection.o Carrier.o CarrierMobility.o CarrierTransport.o Global.o SMSDetector.o SMSDSubDomains.o Threading.o TRACSInterface.o H1DConvolution.o Utilities.o TMeas.o TWaveform.o TMeasHeader.o TMeasDict.o TMeasHeaderDict.o TWaveDict.o
+OBJEDGE_ = Edge_tree.o TMeas.o TWaveform.o TMeasHeader.o TMeasDict.o TMeasHeaderDict.o TWaveDict.o
 
 OBJ := $(patsubst %,$(ODIR)%,$(OBJ_))
 OBJB := $(patsubst %,$(ODIR)%,$(OBJB_))
 OBJC := $(patsubst %,$(ODIR)%,$(OBJC_))
 OBJEDGE := $(patsubst %,$(ODIR)%,$(OBJEDGE_))
 
-all: DoTRACSFit DoTracsOnly mfgTRACSFit edge_tree
+all: DoTRACSFit DoTracsOnly MfgTRACSFit Edge_tree
 
 MAIN = DoTRACSFit
 
 MAINB = DoTracsOnly
 
-MAINC = mfgTRACSFit
+MAINC = MfgTRACSFit
 
-EDGE = edge_tree
+EDGE = Edge_tree
 
 DoTRACSFit: $(OBJ)
 	@echo +++Compilation OK!
@@ -95,14 +95,14 @@ DoTracsOnly: $(OBJB)
 	@$(BUILD_CMD)
 	@echo +++Building SUCCESSFUL!
 
-mfgTRACSFit: $(OBJC)
+MfgTRACSFit: $(OBJC)
 	@echo +++Compilation OK!
 	@echo +++Linking in progress...
 	@$(CC) $(CFLAGS) $(INCLUDES) -o myApp/$(MAINC) $(OBJC) $(LFLAGS) $(LIBS)
 	@$(BUILD_CMD)
 	@echo +++Building SUCCESSFUL!
 	
-edge_tree: $(OBJEDGE)
+Edge_tree: $(OBJEDGE)
 	@echo +++Compilation OK!
 	@echo +++Linking in progress...
 	@$(CC) $(CFLAGS) $(INCLUDES) -o myApp/$(EDGE) $(OBJEDGE) $(LFLAGS) $(LIBS)
@@ -120,14 +120,14 @@ $(ODIR)DoTracsOnly.o: src/DoTracsOnly.cpp
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)DoTracsOnly.cpp -o $@
 	@$(BUILD_CMD)
 
-$(ODIR)mfgTRACSFit.o: src/mfgTRACSFit.cpp
+$(ODIR)MfgTRACSFit.o: src/MfgTRACSFit.cpp
 	@$(PRINT)
-	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)mfgTRACSFit.cpp -o $@
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)MfgTRACSFit.cpp -o $@
 	@$(BUILD_CMD)
 	
-$(ODIR)edge_tree.o: src/edge_tree.cpp
+$(ODIR)Edge_tree.o: src/Edge_tree.cpp
 	@$(PRINT)
-	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)edge_tree.cpp -o $@
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)Edge_tree.cpp -o $@
 	@$(BUILD_CMD)
 	
 $(ODIR)TRACSFit.o: $(SDIR)TRACSFit.cpp
@@ -155,9 +155,9 @@ $(ODIR)CarrierTransport.o: $(SDIR)CarrierTransport.cpp
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)CarrierTransport.cpp -o $@
 	@$(BUILD_CMD)
 
-$(ODIR)global.o: $(SDIR)global.cpp
+$(ODIR)Global.o: $(SDIR)Global.cpp
 	@$(PRINT)
-	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)global.cpp -o $@
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)Global.cpp -o $@
 	@$(BUILD_CMD)
 
 $(ODIR)SMSDetector.o: $(SDIR)SMSDetector.cpp
@@ -170,9 +170,9 @@ $(ODIR)SMSDSubDomains.o: $(SDIR)SMSDSubDomains.cpp
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)SMSDSubDomains.cpp -o $@
 	@$(BUILD_CMD)
 
-$(ODIR)threading.o: $(SDIR)threading.cpp
+$(ODIR)Threading.o: $(SDIR)Threading.cpp
 	@$(PRINT)
-	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)threading.cpp -o $@
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)Threading.cpp -o $@
 	@$(BUILD_CMD)
 
 $(ODIR)TRACSInterface.o: $(SDIR)TRACSInterface.cpp
@@ -185,9 +185,9 @@ $(ODIR)H1DConvolution.o: $(SDIR)H1DConvolution.C
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)H1DConvolution.C -o $@
 	@$(BUILD_CMD)
 
-$(ODIR)utilities.o: $(SDIR)utilities.cpp
+$(ODIR)Utilities.o: $(SDIR)Utilities.cpp
 	@$(PRINT)
-	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)utilities.cpp -o $@	
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SDIR)Utilities.cpp -o $@	
 	@$(BUILD_CMD)
 	
 $(ODIR)TMeas.o: $(SDIR)TMeas.cpp
