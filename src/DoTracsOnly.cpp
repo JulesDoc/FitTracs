@@ -33,11 +33,27 @@ int main( int argc, char *argv[]) {
 
 	if(argc==1){
 		num_threads = std::thread::hardware_concurrency(); // No. of threads = No. of cores
+
 	}
-	else num_threads = atoi(argv[1]);
-	if (num_threads == 0){
-		num_threads = 1;
+
+	if(argc==2){
+		num_threads = atoi(argv[1]);
+		if (num_threads == 0){
+			num_threads = 1;
+		}
 	}
+
+	if(argc==3){
+		num_threads = atoi(argv[1]);
+		fnm = argv[2];
+
+	}
+
+
+	//else num_threads = atoi(argv[1]);
+	//if (num_threads == 0){
+	//	num_threads = 1;
+	//}
 
 	//These lines turn the number of threads to the maximum number of machine cores but taking into account the number of threads pointed by the user. It is possible that the number of threads launched do not match
 	//with the array of steps, then it breaks. It can be commented if the user want to control it by himself. When commented, start the thread loop from 0 instead of from 1!!.

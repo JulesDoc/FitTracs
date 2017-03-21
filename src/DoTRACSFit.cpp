@@ -62,8 +62,9 @@ int main( int argc, char *argv[]) {
 
 	//Configuration file
 	TString FileConf = TString( argv[3] ) ;
-	std::string lfnm(argv[3]) ;
-	fnm = lfnm;
+	fnm = argv[3];
+	//std::string lfnm(argv[3]) ;
+	//fnm = lfnm;
 
 	//Restrictions for fits
 	TString how="";
