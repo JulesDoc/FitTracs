@@ -40,21 +40,21 @@ std::mutex mtn;
  */
 Carrier::Carrier( char carrier_type, double q,  double x_init, double y_init , SMSDetector * detector, double gen_time = 1.e-9):
 
-				_carrier_type(carrier_type), // Charge carrier(CC)  type. Typically  electron/positron
-				_q(q), //Charge in electron units. Always positive.
-				_dy(0.),
-				_dx(0.),
-				_gen_time(gen_time), // Instant of CC generation
-				_e_field_mod(0.),
-				_detector(detector), // Detector type and characteristics
-				//	_electricField(_detector->get_d_f_grad(),
-				//	_weightingField(_detector->get_w_f_grad(),
-				_myTemp(_detector->get_temperature()), // Temperature of the diode
-				_drift(_carrier_type, detector->get_d_f_grad(), _myTemp, _detector->diffusionON(), _detector->get_dt()), // Carrier Transport object
-				_mu(_carrier_type, _myTemp),// Mobility of the CC
-				_trapping_time(_detector->get_trapping_time()),
-				diffDistance(0.),
-				_crossed(false)
+						_carrier_type(carrier_type), // Charge carrier(CC)  type. Typically  electron/positron
+						_q(q), //Charge in electron units. Always positive.
+						_dy(0.),
+						_dx(0.),
+						_gen_time(gen_time), // Instant of CC generation
+						_e_field_mod(0.),
+						_detector(detector), // Detector type and characteristics
+						//	_electricField(_detector->get_d_f_grad(),
+						//	_weightingField(_detector->get_w_f_grad(),
+						_myTemp(_detector->get_temperature()), // Temperature of the diode
+						_drift(_carrier_type, detector->get_d_f_grad(), _myTemp, _detector->diffusionON(), _detector->get_dt()), // Carrier Transport object
+						_mu(_carrier_type, _myTemp),// Mobility of the CC
+						_trapping_time(_detector->get_trapping_time()),
+						diffDistance(0.),
+						_crossed(false)
 
 {
 
@@ -117,10 +117,11 @@ void Carrier::calculateDiffusionStep(double dt){
  * @param y_init
  * @return
  */
-std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double x_init, double y_init )
+std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double x_init/*y_pos*/, double y_init /*z_pos*/ )
 {
 	_x[0] = x_init;
 	_x[1] = y_init;
+	//std::ofstream fileDiffDrift;
 
 	bool regularCarrier = true;
 	double tDiff=0.;
@@ -136,16 +137,15 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 	Array<double> wrap_w_field(2, _w_field.data());
 
 
-
 	/*Carrier is in NO depleted area*/
 	if ( (_x[1] > _detector->get_depletionWidth()) && (_x[1] < _detector->get_y_max()) && (_x[0] > _detector->get_x_min()) && (_x[0] < _detector->get_x_max()) && (_detector->diffusionON()) ){
 		regularCarrier = false;
 		//Four times the trapping time represent almost 100% of the signal.
-		while( (tDiff < (4 * _trapping_time)) &&  (tDiff<max_time)  ){
+		while( (tDiff < (4 * _trapping_time)) &&  (tDiff<(max_time))  ){
 			_e_field_mod = 0;
-			calculateDiffusionStep(dt); //Carrrier movement due to diffusion
+			calculateDiffusionStep(dt); //Carrier movement due to diffusion
 			tDiff += dt;
-			if ( (_x[1] < _detector->get_depletionWidth()) && (_x[1] < _detector->get_y_max()) && (_x[0] > _detector->get_x_min()) && (_x[0] < _detector->get_x_max()) ){
+			if ((_x[1] < _detector->get_depletionWidth()) && (_x[1] < _detector->get_y_max()) && (_x[0] > _detector->get_x_min()) && (_x[0] < _detector->get_x_max())){
 				regularCarrier = true;
 				//To count carriers passing to the depleted region
 				_crossed = true;
@@ -160,24 +160,29 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 	if ((regularCarrier) && (_x[1] < _detector->get_depletionWidth())){
 
 		int it0 = ( _detector->diffusionON() ) ? TMath::Nint( (_gen_time + tDiff)/dt ) : TMath::Nint( _gen_time/dt ) ;
+		//bool saleOut = false;
+
+		//fileDiffDrift << "New carrier at: "<< "x= " <<_x[0] << "; z= " << _x[1] << std::endl;
 		for ( int i = it0 ; i < max_steps; i++)
 		{
 
 			if (_detector->is_out(_x)) // If CC outside detector
 			{
 				i_n[i] = 0;
+				//if (_x[1] < 0) fileDiffDrift << "Sale" << std::endl;
+				//else fileDiffDrift << "OUT" << std::endl;
+				//saleOut = true;
 
-				//Take into account if it is not depleted area. And code diffusion movements for a t and
-				//check if is inside depletion in less than 2*trapping time.
+
+				//Take into account if it is not depleted area.
+				//Check if is inside depletion in less than n*trapping time.
 				//If yes, that particles starts to feel diffusion and electric field.
 				break; // Finish (CC gone out)
 			}
 			else
 			{
 
-				if  (_detector->diffusionON()){
-					calculateDiffusionStep(dt); //Carrrier movement due to diffusion
-				}
+
 				safeRead.lock();
 				_detector->get_d_f_grad()->eval(wrap_e_field, wrap_x);
 				_detector->get_w_f_grad()->eval(wrap_w_field, wrap_x);
@@ -188,10 +193,28 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 				i_n[i] = _q *_sign* _mu.obtain_mobility(_e_field_mod) * (_e_field[0]*_w_field[0] + _e_field[1]*_w_field[1]);
 
 				stepper.do_step(_drift, _x, tDep, dt); //Carrier movement due to drift
+				//fileDiffDrift << "Position after Dritf: " << "x= " <<_x[0] << "; z= " << _x[1] << std::endl;
+
+				if  (_detector->diffusionON()){
+					calculateDiffusionStep(dt); //Carrier movement due to diffusion
+					//fileDiffDrift << "Position after Diffu: " << "x= " <<_x[0] << "; z= " << _x[1] << std::endl;
+				}
+
+
 				// Trapping effects due to radiation-induced defects (traps) implemented in CarrierColleciton.cpp
 			}
 			tDep+=dt;
 		}
+		//if (!saleOut) fileDiffDrift << "END maxtime" << std::endl;
+
+		/*double damelo;
+		for (double i = 0.; i < i_n.size(); i ++)
+			{
+				damelo = damelo + i_n[i];
+			}
+		fileDiffDrift << damelo << std::endl;
+		damelo = 0;*/
+
 		return i_n;
 	}
 	return i_n=0.;

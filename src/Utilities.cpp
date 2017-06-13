@@ -29,6 +29,38 @@ TH2D utilities::export_to_histogram(Function &func, TString hist_name, TString h
   return hist;
 }
 
+TH2D utilities::export_mod_to_histogram(Function &func, TString hist_name, TString hist_title, int n_bins_x , double x_min, double x_max, int n_bins_y, double y_min, double y_max)
+{
+
+ double x_value;
+ double y_value;
+ Function * e_f_grad = &func;
+ double e_field_mod;
+ double e_f_x;
+ double e_f_y;
+
+
+  double step_x = (x_max -x_min)/n_bins_x;
+  double step_y = (y_max -y_min)/n_bins_y;
+  TH2D hist = TH2D(hist_name,hist_title, n_bins_x , x_min-0.5*step_x, x_max+0.5*step_x, n_bins_y, y_min-0.5*step_y, y_max+0.5*step_y);
+
+  double xval , yval ;
+  for (int x=1; x<=n_bins_x; x++) {
+  	xval=x_min+(x-1)*step_x;
+    for (int y=1; y<=n_bins_y; y++) {
+    	yval=y_min+(y-1)*step_y;
+    	e_f_x = ((*e_f_grad)[0])(xval , yval);
+    	e_f_y = ((*e_f_grad)[1])(xval , yval);
+    	e_field_mod = sqrt(e_f_x*e_f_x +  e_f_y *e_f_y);
+        //x_value = (x - 0.5)*step_x;
+        //y_value = (y - 0.5)*step_y;
+        //hist.Fill( x_max-x_value,y_max-y_value, e_field_mod);
+        hist.SetBinContent( n_bins_x-x+1,n_bins_y-y+1, e_field_mod);
+    }
+  }
+  return hist;
+}
+
 // function to paint a TH2D root histogram in a color map
 /*void  utilities::paint_TH2D_qcp(TH2D hist, QCPColorMap * color_map)
 {
@@ -126,8 +158,8 @@ void utilities::write_results_to_file(QString filename, QVector<QVector<double>>
 void utilities::write_to_file_row(std::string filename, TH1D *hconv, double temp, double yShift, double height, double voltage)
 {
   unsigned long int steps = hconv->GetNbinsX();
- height = height/1000.;
- yShift = yShift/1000.;
+  height = height/1000.;
+  yShift = yShift/1000.;
 
   std::ofstream out; // open file
 	out.open(filename, std::ios_base::app);

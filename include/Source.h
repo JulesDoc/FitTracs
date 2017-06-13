@@ -17,7 +17,7 @@
  * SOURCE TERM
  *
  * This class contains the source term for the poisson equation
- * Space charge distribution is to be parametrized here.
+ * Space charge distribution is parametrized here.
  *
  *
  */
@@ -36,7 +36,7 @@
 	double z1 = 120.;
 	double z2 = 220.;
 	double z3 = 300.;
-	std::string NeffApproach = "Trilinear";
+	std::string NeffApproach = "Triconstant";
 	 
 	void eval(Array<double>& values, const Array<double>& x) const
 	{
@@ -104,6 +104,7 @@
 
 			double neff = 0.5*((neff_1*bridge_1)+(neff_2*bridge_2)+(neff_3*bridge_3));
 			values[0] = neff*0.00152132;
+
 		}
 		// Fix units from the PdC version
 

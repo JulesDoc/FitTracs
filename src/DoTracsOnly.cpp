@@ -80,6 +80,9 @@ int main( int argc, char *argv[]) {
 	int crosses = 0;
 	for (int i = 0; i < num_threads; i++){
 		crosses+=TRACSsim[i]->GettotalCrosses();
+		std::cout << "Crossed per thread: " << TRACSsim[i]->GettotalCrosses() << std::endl;
+		std::cout << "Total crosses so far: " << crosses << std::endl;
+
 	}
 	std::cout << "Total particles crossed to Depleted Region: " << crosses << std::endl;
 	//End results due to diffusion

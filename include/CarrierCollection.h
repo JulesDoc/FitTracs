@@ -16,7 +16,6 @@
 
 #include "Carrier.h"
 
-
 #include <string>
 #include <sstream>
 #include <fstream>

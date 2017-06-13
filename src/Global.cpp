@@ -27,5 +27,6 @@ std::string fnm="MyConfigTRACS";
 //For mutex areas
 std::mutex mtx;
 int num_threads;
+std::ofstream fileDiffDrift;
 
 

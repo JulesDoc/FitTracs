@@ -86,6 +86,7 @@ void CarrierCollection::simulate_drift( double dt, double max_time, double shift
 {
 
 	int totalCross = 0;
+	//fileDiffDrift.open ("fileDiffDrift");
 	// range for through the carriers
 	for (auto carrier : _carrier_list_sngl)
 	{
@@ -98,6 +99,10 @@ void CarrierCollection::simulate_drift( double dt, double max_time, double shift
 			std::array< double,2> x = carrier.get_x();
 			double x_init = x[0] + shift_x;
 			double y_init = x[1] + shift_y;
+			//x[0] represents the X position read from the carriers file
+			//shift_x represents the shift applied to X read from the steering file, namely, where to point the laser.
+			//x[1] represents the Y position read from the carriers file. Y is seen as Z.
+			//shift_y represents the Z (y) position read from the steering file. Since the program does edge-TCT, Z can be defined in one or more steps.
 
 			curr_elec += carrier.simulate_drift( dt , max_time, x_init, y_init);
 		}
@@ -117,7 +122,8 @@ void CarrierCollection::simulate_drift( double dt, double max_time, double shift
 			totalCross += 1;
 		}
 	}
-	std::cout << "Number of carriers crossed to DR in last Z step with Height " << shift_y << ": " << totalCross << std::endl;
+	//fileDiffDrift.close();
+	//std::cout << "Number of carriers crossed to DR in last Z step with Height " << shift_y << ": " << totalCross << std::endl;
 	totalCrosses += totalCross;
 
 	double trapping_time = _detector->get_trapping_time();

@@ -60,4 +60,42 @@ class PeriodicLateralBoundary: public SubDomain {
     void map(const Array<double>& x, Array<double>& y) const;
 };
 
+
+/********************************/
+
+class CentralStripBoundaryWP: public SubDomain {
+  private:
+    double _pitch;      // strip pitch
+    double _width;      // strip width
+    int _nns;           // number of neighbor strips
+    double _depletion_width;
+  public:
+    CentralStripBoundaryWP(double pitch, double width, int nns, double depletion_width);
+    bool inside(const Array<double>& x, bool on_boundary) const;
+};
+
+class NeighbourStripBoundaryWP: public SubDomain {
+  private:
+    double _pitch;      // strip pitch
+    double _width;      // strip width
+    int _nns;           // number of neighbor strips
+    double _depletion_width;
+
+  public:
+    NeighbourStripBoundaryWP(double pitch, double width, int nns, double depletion_width );
+    bool inside(const Array<double>& x, bool on_boundary) const;
+};
+
+class BackPlaneBoundaryWP: public SubDomain {
+  private:
+    double _x_min;      // min x value
+    double _x_max;      // max x value
+    double _depletion_width;      // detector depth
+  public:
+    BackPlaneBoundaryWP(double x_min, double x_max, double depletion_width);
+    bool inside(const Array<double>& x, bool on_boundary) const;
+};
+
+/********************************/
+
 #endif // SMSSUBDOMAINS_H

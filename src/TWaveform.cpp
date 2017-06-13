@@ -35,7 +35,7 @@
 
 //#define T4BL  80.0 //Time for baseline (5.0 is the standard)
 //#define T4BL  20000. //Celso(5.0 is the standard)
-#define T4BL  10.0 //Time for baseline (5.0 is the standard)
+#define T4BL  0.5 //Time for baseline (5.0 is the standard)
 
 ClassImp(TWaveform)
 

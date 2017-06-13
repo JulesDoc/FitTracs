@@ -66,7 +66,9 @@ private:
 	double vInit; //added v
 	double deltaV;
 	double vMax;
-	double v_depletion;
+	double v_strips;
+	double v_backplane;
+	//double v_depletion;
 	double deltaZ;
 	double zInit;
 	double zMax;
@@ -79,8 +81,10 @@ private:
 	double yPos;
 	double tolerance;
 	double chiFinal;
+	double depletion_width;
 	int diffusion;
 	int total_crosses;
+	bool underDep;
 
 	int nThreads;
 	int nns;
@@ -175,22 +179,7 @@ public:
 	TH1D *GetItRamo();
 	TH1D *GetItRc();
 	TH1D *GetItConv();
-	std::vector<double> get_NeffParam(); //Returns Neff parametrization
-	inline int GetnSteps(){
-		return n_tSteps;
-	}
 
-	inline double GetTolerance(){
-		return tolerance;
-	}
-
-	inline double GetchiFinal(){
-		return chiFinal;
-	}
-
-	inline int GettotalCrosses(){
-		return total_crosses;
-	}
 
 	//Tree functions
 	//friend TTree * GetTree(); //Returns the pointer to the TRACS simulated tree
@@ -208,6 +197,12 @@ public:
 	UShort_t GetMinute();
 	UShort_t GetSecond();
 
+	std::vector<double> get_NeffParam();
+	int GetnSteps();
+	double GetTolerance();
+	double GetchiFinal();
+	int GettotalCrosses();
+
 
 
 	//Loops
@@ -223,9 +218,13 @@ public:
 	void write_header(int tid = 0);
 	void resize_array();
 	void write_to_file(int tid = 0);
+	void fields_hist_to_file(int, int);
 	void set_neffType(std::string newParametrization);
 	void set_carrierFile(std::string newCarrFile);
 	void set_vItotals(double);
+	void resetAll();
+
+
 
 	//ROOT related
 	void DumpToTree( TMeas *em , TTree *tree ) ;

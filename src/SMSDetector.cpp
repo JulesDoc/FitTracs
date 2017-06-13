@@ -55,11 +55,13 @@ SMSDetector::SMSDetector(double pitch, double width, double depth, int nns, char
 		_y_min(0.0), // Starting vertical position for CG (microns)
 		_y_max(_depth), // Ending vertical position for CG (microns)
 		_vdep(0),
+		_v_bias(0),
 		_v_backplane(0),
 		_v_strips(0),
 		_f_poisson(0),
 		_diffusion(diffusion),
-		depletion_width(0.),
+		_depletion_width(0),
+		_depleted(false),
 		_dt(dt),
 		// Mesh properties
 		_n_cells_x(n_cells_x),
@@ -71,7 +73,10 @@ SMSDetector::SMSDetector(double pitch, double width, double depth, int nns, char
 #endif
 		_periodic_boundary(_x_min, _x_max, _depth),
 
-		// More detector properties/parts
+		//_central_stripUnderDep(_pitch, _width, _nns, _depletion_width),
+		//_neighbour_stripsUnderDep(_pitch, _width, _nns, _depletion_width),
+		//_backplaneUnderDep(_x_min, _x_max, _depletion_width),
+
 		_central_strip(_pitch, _width, _nns),
 		_neighbour_strips(_pitch, _width, _nns),
 		_backplane(_x_min, _x_max, _depth),
@@ -86,8 +91,7 @@ SMSDetector::SMSDetector(double pitch, double width, double depth, int nns, char
 		_w_u(_V_p),
 		_d_u(_V_p),
 		_w_f_grad(_V_g), // Weighting field
-		_d_f_grad(_V_g)
-
+		_d_f_grad(_V_g)  // Drifting field
 {
 }
 
@@ -103,10 +107,44 @@ SMSDetector::SMSDetector(double pitch, double width, double depth, int nns, char
 void SMSDetector::set_voltages(double v_bias, double v_depletion)
 {
 	_vdep = v_depletion; // Store depletion voltage
+	_v_bias = v_bias;
+	_depleted = (_v_bias > _vdep) ? true : false;
 	_v_strips = (_implant_type == 'n') ? v_bias : 0.0;
 	_v_backplane = (_implant_type == 'p') ? v_bias : 0.0;
+
 	// neff defined in F/microns
-	_f_poisson = ((_bulk_type== 'p') ? +1.0 : -1.0)*(-2.0*v_depletion)/(_depth*_depth);
+	//original only taking depth of the detector (case not depleted is ignored): _f_poisson = ((_bulk_type== 'p') ? +1.0 : -1.0)*(-2.0*v_depletion)/(_depth*_depth);
+
+	if (_depleted){//Detector is depleted
+		_depletion_width = _depth;
+		_f_poisson = ((_bulk_type== 'p') ? +1.0 : -1.0)*(-2.0*_v_bias)/(_depth*_depth);
+		std::cout << "fp depleted: " << _f_poisson << std::endl;
+		//std::cout << "Depletion Width: " << _depletion_width << std::endl;
+
+	}
+
+	else{//Detector is not depleted
+
+		_depletion_width = _depth * sqrt((abs(_v_strips-_v_backplane))/_vdep);
+		_f_poisson = ((_bulk_type== 'p') ? +1.0 : -1.0)*(-2.0*_v_bias)/(_depletion_width * _depletion_width);
+		std::cout << "fp NO depleted: " << _f_poisson << std::endl;
+		std::cout << "Depletion Width: " << _depletion_width << std::endl;
+	}
+
+
+	if (_fluence == 0){//AND NO irrad, then change neff parameters. Otherwise taken from steering.
+		_neff_type = "Triconstant";
+		//neff_param[0] = neff_parameters[0]; //This one, y0, must be set by the user. Taken from the steering file. ** -0.227 **
+		_neff_param[0] = _f_poisson; //y0
+		_neff_param[1] = 0.0; // y1
+		_neff_param[2] = 0.0; // y2
+		_neff_param[3] = 0.0; // y3
+		_neff_param[4] = 0.0; // z0
+		_neff_param[5] = _depletion_width; // z1
+		_neff_param[6] = 0.0; // z2
+		_neff_param[7] = 0.0; // z3
+	}
+
 }
 
 /*
@@ -120,24 +158,45 @@ void SMSDetector::solve_w_u()
 {
 
 	// Solving Laplace equation f = 0
-	Constant f(0);
+	std::vector<const DirichletBC*> bcs;
+	Constant f(0.0);
 	_L_p.f = f;
 
 	// Set BC values
 	Constant central_strip_V(1.0);
 	Constant neighbour_strip_V(0.0);
 	Constant backplane_V(0.0);
-	// Set BC variables
-	DirichletBC central_strip_BC(_V_p, central_strip_V, _central_strip);
-	DirichletBC neighbour_strip_BC(_V_p, neighbour_strip_V, _neighbour_strips);
-	DirichletBC backplane_BC(_V_p, backplane_V, _backplane);
-	// Collect them
-	std::vector<const DirichletBC*> bcs;
+
+	// Set BC variables based on depletion conditions
+	//if(!_depleted){
+
+	//Redefinition of boundary conditions
+	CentralStripBoundaryWP central_stripUnderDep(_pitch, _width, _nns, _depletion_width);
+	NeighbourStripBoundaryWP neighbour_stripsUnderDep(_pitch, _width, _nns, _depletion_width);
+	BackPlaneBoundaryWP backplaneUnderDep(_x_min, _x_max, _depletion_width);
+
+	DirichletBC central_strip_BC(_V_p, central_strip_V, central_stripUnderDep);
+	DirichletBC neighbour_strip_BC(_V_p, neighbour_strip_V, neighbour_stripsUnderDep);
+	DirichletBC backplane_BC(_V_p, backplane_V, backplaneUnderDep);
+
 	bcs.push_back(&central_strip_BC);
 	bcs.push_back(&neighbour_strip_BC);
 	bcs.push_back(&backplane_BC);
-
 	solve(_a_p == _L_p , _w_u, bcs);
+	//}
+//else{
+
+	//Old boundary conditions
+	/*	DirichletBC central_strip_BC(_V_p, central_strip_V, _central_strip);
+		DirichletBC neighbour_strip_BC(_V_p, neighbour_strip_V, _neighbour_strips);
+		DirichletBC backplane_BC(_V_p, backplane_V, _backplane);
+		bcs.push_back(&central_strip_BC);
+		bcs.push_back(&neighbour_strip_BC);
+		bcs.push_back(&backplane_BC);
+		solve(_a_p == _L_p , _w_u, bcs);*/
+	//	}
+
+
 }
 
 /*
@@ -146,16 +205,20 @@ void SMSDetector::solve_w_u()
 
 void SMSDetector::solve_d_u()
 {
-	Constant fpois(_f_poisson); 
+	Constant fpois(_f_poisson);
+	std::vector<const DirichletBC*> bcs;
 	Source f;
-	if (_fluence <= 0)
-	{
-		_L_p.f = fpois;
-		// Idiot-proofing
-		_trapping_time = std::numeric_limits<double>::max();
-	}
-	else 
-	{
+
+
+	//if (_fluence == 0 && _depleted) //NO irrad but YES depleted. fpoisson, charge distribution, is a constant during the whole detector
+	//{
+	//	_L_p.f = fpois;
+		//	_trapping_time = std::numeric_limits<double>::max();
+	//}
+
+	//else //If YES Irrad OR NO depleted, charge distribution is not a constant. Parameters from steering file.
+	//{
+
 		f.set_NeffApproach(_neff_type);
 		f.set_y0(_neff_param[0]);
 		f.set_y1(_neff_param[1]);
@@ -166,24 +229,39 @@ void SMSDetector::solve_d_u()
 		f.set_z2(_neff_param[6]);
 		f.set_z3(_neff_param[7]);
 		_L_p.f = f;
-	}
-
+	//}
 
 	// Set BC values
 	Constant central_strip_V(_v_strips);
 	Constant neighbour_strip_V(_v_strips);
 	Constant backplane_V(_v_backplane);
-	// Set BC variables
-	DirichletBC central_strip_BC(_V_p, central_strip_V, _central_strip);
-	DirichletBC neighbour_strip_BC(_V_p, neighbour_strip_V, _neighbour_strips);
-	DirichletBC backplane_BC(_V_p, backplane_V, _backplane);
-	// Collect them
-	std::vector<const DirichletBC*> bcs;
+
+	// Set BC variables based on depletion conditions
+	//if(!_depleted){ //NO depleted. Boundary conditions changed to the depletion_width.
+
+	//Redefinition of boundary conditions
+	CentralStripBoundaryWP central_stripUnderDep(_pitch, _width, _nns, _depletion_width);
+	NeighbourStripBoundaryWP neighbour_stripsUnderDep(_pitch, _width, _nns, _depletion_width);
+	BackPlaneBoundaryWP backplaneUnderDep(_x_min, _x_max, _depletion_width);
+
+	DirichletBC central_strip_BC(_V_p, central_strip_V, central_stripUnderDep);
+	DirichletBC neighbour_strip_BC(_V_p, neighbour_strip_V, neighbour_stripsUnderDep);
+	DirichletBC backplane_BC(_V_p, backplane_V, backplaneUnderDep);
+
 	bcs.push_back(&central_strip_BC);
 	bcs.push_back(&neighbour_strip_BC);
 	bcs.push_back(&backplane_BC);
-
 	solve(_a_p == _L_p , _d_u, bcs);
+	/*	}//old Boundary conditions
+	else{
+		DirichletBC central_strip_BC(_V_p, central_strip_V, _central_strip);
+		DirichletBC neighbour_strip_BC(_V_p, neighbour_strip_V, _neighbour_strips);
+		DirichletBC backplane_BC(_V_p, backplane_V, _backplane);
+		bcs.push_back(&central_strip_BC);
+		bcs.push_back(&neighbour_strip_BC);
+		bcs.push_back(&backplane_BC);
+		solve(_a_p == _L_p , _d_u, bcs);
+	}*/
 }
 
 /*
@@ -217,12 +295,13 @@ void SMSDetector::solve_d_f_grad()
 bool SMSDetector::is_out(const std::array< double,2> &x)
 {
 	bool out = true;
-	if ( (x[0] > _x_min) && (x[0] < _x_max) && (x[1] > _y_min) && (x[1] < _y_max))
+	if ( (x[0] > _x_min) && (x[0] < _x_max) && (x[1] > _y_min) && (x[1] < _depletion_width))
 	{
 		out = false;
 	}
 	return out;
 }
+
 
 /************************************************************************
  *************************************************************************
@@ -287,6 +366,14 @@ double  SMSDetector::get_x_min()
 double  SMSDetector::get_x_max()
 {
 	return _x_max;
+}
+int  SMSDetector::get_n_cells_x()
+{
+	return _n_cells_x;
+}
+int  SMSDetector::get_n_cells_y()
+{
+	return _n_cells_y;
 }
 /*
  * Getter method for the temperature of the diode
@@ -404,13 +491,18 @@ double SMSDetector::get_neff(){
 
 double SMSDetector::get_depletionWidth(){
 
-	depletion_width = _depth * sqrt((_v_strips-_v_backplane)/_vdep);
-	return depletion_width;
+	//_depletion_width = _depth * sqrt((_v_strips-_v_backplane)/_vdep);
+	return _depletion_width;
 }
 
 double SMSDetector::get_dt(){
 
 	return _dt;
+}
+
+double SMSDetector::calculate_depletionWidth(){
+
+	return _depth * sqrt((_v_strips-_v_backplane)/_vdep);
 }
 
 ///////////////////////SETTERS//////////////////////////////////

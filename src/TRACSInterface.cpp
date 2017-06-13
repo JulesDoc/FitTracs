@@ -44,16 +44,20 @@ TRACSInterface::TRACSInterface(std::string filename)
 			implant_type, waveLength, scanType, C, dt, max_time, vInit, deltaV, vMax, vDepletion, zInit, zMax, deltaZ, yInit, yMax, deltaY, neff_param, neffType,
 			tolerance, chiFinal, diffusion);
 
-	// Initialize vectors / n_Steps / detector / set default zPos, yPos, vBias / carrier_collection 
-	if (fluence <= 0) // if no fluence -> no trapping
+	// Initialize vectors / n_Steps / detector / set default zPos, yPos, vBias / carrier_collection
+
+	if (fluence == 0) // if no fluence -> no trapping
 	{
+		//Trapping configuration
 		trapping = std::numeric_limits<double>::max();
 		trap = "NOtrapping";
 		start = "NOirrad";
-	} else 
-	{
+	}
+	else{
+		//trapping configuration
 		trap = std::to_string((int) std::floor(1.e9*trapping));
 		start = "irrad";
+
 	}
 
 	n_zSteps = (int) std::floor((zMax-zInit)/deltaZ); // Simulation Steps
@@ -148,7 +152,7 @@ TRACSInterface::TRACSInterface(std::string filename)
 
 	vBias = vInit;
 	set_tcount(0);
-	vItotals.resize(voltage.size()*z_shifts.size());
+	vItotals.resize(voltages.size()*z_shifts.size());
 	i_ramo  = NULL;
 	i_rc    = NULL;
 	i_conv  = NULL;
@@ -259,9 +263,9 @@ TH1D * TRACSInterface::GetItConv()
  */
 void TRACSInterface::simulate_ramo_current()
 {
-	i_rc = NULL;
-	i_ramo = NULL;
-	i_conv = NULL;
+	i_rc = nullptr;
+	i_ramo = nullptr;
+	i_conv = nullptr;
 	i_hole = 0;
 	i_elec = 0;
 	i_total = 0;
@@ -299,6 +303,22 @@ std::vector<double>TRACSInterface::get_NeffParam()
 {
 	return neff_param;
 } 
+
+int TRACSInterface::GetnSteps(){
+	return n_tSteps;
+}
+
+double TRACSInterface::GetTolerance(){
+	return tolerance;
+}
+
+double TRACSInterface::GetchiFinal(){
+	return chiFinal;
+}
+
+int TRACSInterface::GettotalCrosses(){
+	return total_crosses;
+}
 
 UShort_t TRACSInterface::GetYear(){
 	time_t currentTime;
@@ -485,6 +505,9 @@ void TRACSInterface::set_carrierFile(std::string newCarrFile)
  *
  * @param tid
  */
+
+
+
 void TRACSInterface::loop_on(int tid)
 {
 
@@ -492,6 +515,7 @@ void TRACSInterface::loop_on(int tid)
 	for (int vPos = 0; vPos < n_vSteps + 1; vPos++)
 	{
 		//vPos = Voltage steps. Normally one step is used.
+
 		detector->set_voltages(voltages[vPos], vDepletion);
 		mtx2.lock();
 		calculate_fields();
@@ -505,26 +529,28 @@ void TRACSInterface::loop_on(int tid)
 			{
 
 				std::cout << "Height " << z_shifts_array[tid][zPos] << " of " << z_shifts.back()  <<  " || Y Position " << y_shifts[yPos]
-																																	<< " of " << y_shifts.back() << " || Voltage " << voltages[vPos] << " of " << voltages.back() << std::endl;
+						  << " of " << y_shifts.back() << " || Voltage " << voltages[vPos] << " of " << voltages.back() << std::endl;
 				set_zPos(z_shifts_array[tid][zPos]);
 				simulate_ramo_current();
-				GetItRc();
+				if (num_threads > 1)
+					i_rc_array[tid][zPos] = GetItRc();
+				else i_rc_array[vPos][zPos] = GetItRc();
 
 				//-------------------------
-				//Build and order the final array of currents.
+				//Build and sort the final array of currents.
 				//First, get the position of the Z.
 				std::vector<double>::iterator it = find(z_shifts.begin(), z_shifts.end(), z_shifts_array[tid][zPos]);
 				auto pos = it - z_shifts.begin();
 				int ind = vPos*z_shifts.size() + pos;
-				//vItotals[ind] = i_total;
 				vItotals[ind] = i_shaped;
+
 				//-------------------------
 				//Filling histograms-------> commented for Fitting
 				//i_ramo = GetItRamo();
 				//i_ramo_array[tid][zPos] = i_ramo; // for output
 				//i_ramo = NULL;
 				//i_rc = GetItRc();
-				i_rc_array[tid][zPos] = i_rc; // for output
+				//i_rc_array[tid][zPos] = i_rc; // for output
 
 				//Check this: Pbm with TFile opened many times. Commented 8.11.2016 cause we don't need conv for the moment
 				//mtx2.lock();
@@ -533,7 +559,10 @@ void TRACSInterface::loop_on(int tid)
 				//mtx2.unlock();
 
 			}
+
+
 		}
+		if (tid == 0) fields_hist_to_file(tid, vPos);
 
 	}
 
@@ -580,10 +609,10 @@ void TRACSInterface::write_header(int tid)
  */
 void TRACSInterface::resize_array()
 {
-
 	i_ramo_array.resize(num_threads);
 	i_rc_array.resize(num_threads);
 	i_conv_array.resize(num_threads);
+
 	for (int i = 0; i < num_threads; i++)
 	{
 		i_ramo_array[i].resize(z_shifts_array[i].size());
@@ -592,9 +621,18 @@ void TRACSInterface::resize_array()
 		std::cout << "i_ramo_array[xlen][ylen]   " << i_ramo_array.size()<<"  " <<i_ramo_array[i].size() <<std::endl;
 	}
 
+
+	if(num_threads == 1){
+		i_rc_array.resize(n_vSteps + 1);
+		for (int i = 0; i <= n_vSteps; i++)
+		{
+			i_rc_array[i].resize(z_shifts_array[0].size());
+		}
+	}
+
+
+
 }
-
-
 /*
  * Writing to a single file
  *
@@ -617,27 +655,62 @@ void TRACSInterface::write_to_file(int tid)
 	n_par1 = n_ySteps;
 	n_par2 = n_vSteps;
 	//loop
-	for (params[2] = 0; params[2] < n_par2 + 1; params[2]++)
+	for (params[2] = 0; (num_threads == 1) ? params[2] <= 0 : params[2] < n_par2 + 1; params[2]++)
 	{
-		for (params[1] = 0; params[1] < n_par1 + 1; params[1]++)
+		for (params[1] = 0; (num_threads == 1) ? params[1] <= 0 : params[1] < n_par1 + 1; params[1]++)
 		{
-			for (int i = 0; i < num_threads; i++)
+			for (int i = 0; (num_threads == 1) ? i < n_vSteps + 1 : i < num_threads; i++)
 			{
-				for (params[0] = 0; params[0] < i_ramo_array[i].size(); params[0]++)
+				for (params[0] = 0; (num_threads == 1) ? params[0] < i_rc_array[i].size() : params[0] < i_ramo_array[i].size(); params[0]++)
 				{
 					//utilities::write_to_file_row(hetct_noconv_filename, i_ramo_array[i][params[0]], detector->get_temperature(), y_shifts[params[1]], z_shifts_array[i][params[0]], voltages[params[2]]);
 					//utilities::write_to_file_row(hetct_conv_filename, i_conv_array[i][params[0]], detector->get_temperature(), y_shifts[params[1]], z_shifts_array[i][params[0]], voltages[params[2]]);
-					utilities::write_to_file_row(hetct_rc_filename, i_rc_array[i][params[0]], detector->get_temperature(), y_shifts[params[1]], z_shifts_array[i][params[0]], voltages[params[2]]);
+					if(num_threads > 1)
+						utilities::write_to_file_row(hetct_rc_filename, i_rc_array[i][params[0]], detector->get_temperature(), y_shifts[params[1]], z_shifts_array[i][params[0]], voltages[params[2]]);
+					else utilities::write_to_file_row(hetct_rc_filename, i_rc_array[i][params[0]], detector->get_temperature(), y_shifts[0], z_shifts_array[0][params[0]], voltages[i]);
 
 				}
 
-
 			}
+
 		}
 
 	}
 
+
+
 }
+
+void TRACSInterface::fields_hist_to_file(int tid, int vPos)
+{
+
+	/*Exporting 2D Histograms to file*/
+	// get plot and set new data
+	TString file_name;
+	file_name.Form("wf%dV", TMath::Nint(voltages[vPos]));//"2Dhistos"+voltages[vPos]+"V"+".root";
+	TFile *fout = new TFile(file_name,"RECREATE");
+
+	TString wpm;
+	wpm.Form("WP_%d_V", TMath::Nint(voltages[vPos]) ) ;
+	TString wfm;
+	wfm.Form("WF_%d_V", TMath::Nint(voltages[vPos]) ) ;
+	TString efm;
+	efm.Form("EF_%d_V", TMath::Nint(voltages[vPos]) ) ;
+
+	TH2D h_w_u      = utilities::export_to_histogram    ( *detector->get_w_u(), "h_w_u", wpm /*"Weighting potential"*/, detector->get_n_cells_x(), detector->get_x_min(), detector->get_x_max(), detector->get_n_cells_y(), detector->get_y_min(), detector->get_y_max());
+	TH2D h_w_f_grad = utilities::export_mod_to_histogram( *detector->get_w_f_grad(), "h_w_f_grad", wfm /*"Weighting field"*/, detector->get_n_cells_x(), detector->get_x_min(), detector->get_x_max(), detector->get_n_cells_y(), detector->get_y_min(), detector->get_y_max());
+	TH2D h_d_f_grad = utilities::export_mod_to_histogram( *detector->get_d_f_grad(), "h_d_f_grad", efm /*"Electric field"*/, detector->get_n_cells_x(), detector->get_x_min(), detector->get_x_max(), detector->get_n_cells_y(), detector->get_y_min(), detector->get_y_max());
+
+	h_w_u.Write();
+	h_w_f_grad.Write();
+	h_d_f_grad.Write();
+	fout->Close();
+}
+
+
+
+
+
 
 /* ---------------------------------------------------------------- */
 /**

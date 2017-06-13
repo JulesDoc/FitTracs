@@ -50,27 +50,22 @@ private:
 	double _y_max; // in microns
 
 	double _vdep; // depletion voltage
-	// bias
+	double _v_bias;// bias
 	double _v_backplane;
 	double _v_strips;
+	bool _depleted;
 
 	// poisson term for solving electric field
 	double _f_poisson;
 
 	//Variables used for diffusion
 	int _diffusion; //If diffusion is ON by user. 0 for NO, 1 for YES
-	double depletion_width;
+	double _depletion_width;
 	double _dt;
-
-
-
 
 	// Meshing parameters
 	int _n_cells_x;
 	int _n_cells_y;
-
-
-
 
 	// meshes (one for each could be used)
 	RectangleMesh _mesh; // mesh for both weighing and drifing potential
@@ -80,6 +75,11 @@ private:
 	CentralStripBoundary _central_strip;
 	NeighbourStripBoundary _neighbour_strips;
 	BackPlaneBoundary _backplane;
+
+	//New subdomains to solve no depleted detectors
+	//CentralStripBoundaryWP _central_stripUnderDep;
+	//NeighbourStripBoundaryWP _neighbour_stripsUnderDep;
+	//BackPlaneBoundaryWP _backplaneUnderDep;
 
 	// Poisson PDE Function Space
 	Poisson::FunctionSpace _V_p;
@@ -105,6 +105,7 @@ public:
 			double fluence = 0.0, std::vector<double> neff_param = {0}, std::string neff_type = "Trilinear", int diffusion = 0, double dt = 300);
 	~SMSDetector();
 	// set methods
+	//void calculate_mod();
 	void set_voltages(double v_bias, double v_depletion);
 	void set_pitch(double pitch);
 	void set_width(double width);
@@ -136,6 +137,8 @@ public:
 	double get_x_max();
 	double get_y_min();
 	double get_y_max();
+	int get_n_cells_x();
+	int get_n_cells_y();
 	double get_temperature();
 	double get_trapping_time();
 	double get_fluence();
@@ -150,6 +153,7 @@ public:
 	int diffusionON();
 	double get_neff();
 	double get_depletionWidth();
+	double calculate_depletionWidth();
 	double get_dt();
 
 
