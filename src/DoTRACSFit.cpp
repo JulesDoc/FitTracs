@@ -89,14 +89,15 @@ int main( int argc, char *argv[]) {
 	//Define parameters and their errors to Minuit
 
 	vector<Double_t> parIni = TRACSsim[0]->get_NeffParam();
-	Int_t nNeff = parIni.size() ;
+	parIni.push_back(TRACSsim[0]->get_fitNorm());
+	Int_t parIniSize = parIni.size() ;
 
-	vector<Double_t> parErr(nNeff, 1.) ;
+	vector<Double_t> parErr(parIniSize, 1.) ;
 
 	//Pass parameters to Minuit
 	MnUserParameters upar(parIni,parErr) ;
-	for ( int i=0 ; i < nNeff ; i++ ) {
-		char pname[8]; sprintf( pname , "p%d" , i);
+	for ( int i=0 ; i < parIniSize ; i++ ) {
+		char pname[parIniSize]; sprintf( pname , "p%d" , i);
 		upar.SetName( i , pname );
 	}
 
@@ -105,6 +106,7 @@ int main( int argc, char *argv[]) {
 	upar.Fix(1) ; upar.Fix(2) ;
 	//upar.Fix(3) ;
 	upar.Fix(4) ; upar.Fix(5); upar.Fix(6) ; upar.Fix(7);
+	//upar.Fix(8);
 
 	std::cout << "=============================================" << std::endl;
 	std::cout<<"Initial parameters: "<<upar<<std::endl;
@@ -129,20 +131,20 @@ int main( int argc, char *argv[]) {
 	//min = mnr() ;
 
 	//Status report
-	if (min.IsValid()) std::cout << "Fit success"         << std::endl ;
-	else               std::cout << "Fit failed"   << std::endl ;
-	std::cout << "Total time: " << total_timeTaken.total_seconds() << std::endl ;
-	std::cout << "MINIMIZATION OUTCOME: " <<  min  << std::endl ;
+	//if (min.IsValid()) std::cout << "Fit success"         << std::endl ;
+	//else               std::cout << "Fit failed"   << std::endl ;
+	//std::cout << "Total time: " << total_timeTaken.total_seconds() << std::endl ;
+	//std::cout << "MINIMIZATION OUTCOME: " <<  min  << std::endl ;
 
 	//Get the fitting parameters
-	for (uint i=0; i<parIni.size();i++) {
+	for (uint i=0; i<parIniSize;i++) {
 		parIni[i]=min.UserState().Value(i);
 		parErr[i]=min.UserState().Error(i);
 	}
 
 	//Calculate TCT pulses with the fit output parameters
 	for (int i = 0; i < num_threads; ++i) {
-		t[i] = std::thread(call_from_thread_NeffPar, i, parIni);
+		t[i] = std::thread(call_from_thread_FitPar, i, parIni);
 	}
 
 	for (int i = 0; i < num_threads; ++i) {
@@ -192,7 +194,7 @@ Double_t TRACSFit::operator() ( const std::vector<Double_t>& par  ) const {
 	boost::posix_time::ptime start = boost::posix_time::second_clock::local_time();
 
 	for (int i = 0; i < num_threads; ++i) {
-		t[i] = std::thread(call_from_thread_NeffPar, i, par);
+		t[i] = std::thread(call_from_thread_FitPar, i, par);
 	}
 
 	for (int i = 0; i < num_threads; ++i) {

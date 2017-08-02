@@ -83,6 +83,8 @@ private:
 	double chiFinal;
 	double depletion_width;
 	int diffusion;
+	double fitNorm;
+
 	int total_crosses;
 	bool underDep;
 
@@ -196,8 +198,10 @@ public:
 	UShort_t GetHour();
 	UShort_t GetMinute();
 	UShort_t GetSecond();
-
+	double get_vDep();
+	double get_fitNorm();
 	std::vector<double> get_NeffParam();
+	std::string get_neff_type();
 	int GetnSteps();
 	double GetTolerance();
 	double GetchiFinal();
@@ -209,7 +213,8 @@ public:
 	void loop_on(int tid = 0); //MULTITHREADING
 
 	// Setters
-	void set_NeffParam(std::vector<double> newParam);
+	void set_Fit_Norm(std::vector<double> vectorFitTri);
+	void set_FitParam(std::vector<double> newParam);
 	void set_trappingTime(double newTrapTime);
 	void set_zPos(double newZPos);
 	void set_yPos(double newYPos);

@@ -133,8 +133,7 @@ void SMSDetector::set_voltages(double v_bias, double v_depletion)
 
 
 	if (_fluence == 0){//AND NO irrad, then change neff parameters. Otherwise taken from steering.
-		_neff_type = "Triconstant";
-		//neff_param[0] = neff_parameters[0]; //This one, y0, must be set by the user. Taken from the steering file. ** -0.227 **
+		//_neff_type = "Triconstant";
 		_neff_param[0] = _f_poisson; //y0
 		_neff_param[1] = 0.0; // y1
 		_neff_param[2] = 0.0; // y2
@@ -144,6 +143,7 @@ void SMSDetector::set_voltages(double v_bias, double v_depletion)
 		_neff_param[6] = 0.0; // z2
 		_neff_param[7] = 0.0; // z3
 	}
+	//if fluence > 0, parameters are taken in the constructor inicialization list, coming from the config file
 
 }
 
@@ -219,6 +219,7 @@ void SMSDetector::solve_d_u()
 	//else //If YES Irrad OR NO depleted, charge distribution is not a constant. Parameters from steering file.
 	//{
 
+
 		f.set_NeffApproach(_neff_type);
 		f.set_y0(_neff_param[0]);
 		f.set_y1(_neff_param[1]);
@@ -252,6 +253,8 @@ void SMSDetector::solve_d_u()
 	bcs.push_back(&neighbour_strip_BC);
 	bcs.push_back(&backplane_BC);
 	solve(_a_p == _L_p , _d_u, bcs);
+	//When solving, go to Source.h to (eval method) establish the source term for solving the Poisson equation using the neff_type and the neff_param recently
+	//set for the Source f.
 	/*	}//old Boundary conditions
 	else{
 		DirichletBC central_strip_BC(_V_p, central_strip_V, _central_strip);
@@ -505,6 +508,11 @@ double SMSDetector::calculate_depletionWidth(){
 	return _depth * sqrt((_v_strips-_v_backplane)/_vdep);
 }
 
+//std::string SMSDetector::get_neff_type(){
+
+//	return _neff_type;
+//}
+
 ///////////////////////SETTERS//////////////////////////////////
 
 /*
@@ -599,16 +607,19 @@ void SMSDetector::set_fluence(double fluencia)
 /*
  * Setter for changing the space charge distribution
  */
-void SMSDetector::set_neff_param(std::vector<double> neff_parameters)
+void SMSDetector::setFitParameters(std::vector<double> fitParameters)
 {
-	_neff_param[0] = neff_parameters[0]; // y0
-	_neff_param[1] = neff_parameters[1]; // y1
-	_neff_param[2] = neff_parameters[2]; // y2
-	_neff_param[3] = neff_parameters[3]; // y3
-	_neff_param[4] = 0.0; // z0
-	_neff_param[5] = neff_parameters[5]; // z1
-	_neff_param[6] = neff_parameters[6]; // z2
-	_neff_param[7] = _depth; // z3
+
+	_neff_param[0] = fitParameters[0]; // y0
+	_neff_param[1] = fitParameters[1]; // y1
+	_neff_param[2] = fitParameters[2]; // y2
+	_neff_param[3] = fitParameters[3]; // y3
+	_neff_param[4] = fitParameters[4]; //It was 0.0
+	_neff_param[5] = fitParameters[5]; // z1
+	_neff_param[6] = fitParameters[6]; // z2
+	_neff_param[7] = fitParameters[7]; //It was depht
+
+
 }
 
 void SMSDetector::set_neff_type(std::string newApproach)

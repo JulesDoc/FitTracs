@@ -119,7 +119,7 @@ public:
 	void set_temperature(double temperature);
 	void set_trapping_time(double trapping_tau);
 	void set_fluence(double fluencia);
-	void set_neff_param(std::vector<double> neff_parameters);
+	void setFitParameters(std::vector<double> fitParameters);
 	void set_neff_type(std::string newApproach);
 	// solve potentials
 	void solve_w_u();
@@ -155,6 +155,7 @@ public:
 	double get_depletionWidth();
 	double calculate_depletionWidth();
 	double get_dt();
+
 
 
 	// some other methods

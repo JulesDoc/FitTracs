@@ -55,6 +55,7 @@ TRACSFit::TRACSFit() {
 	ntm = 0;
 	emh = 0;
 	emhs = 0;
+	fitNorm = 0;
 }
 /**
  *
@@ -76,11 +77,14 @@ TRACSFit::TRACSFit( TString FileMeas , TString FileConf ,  TString howstr ) {
 	sameScale = 0;
 	h1orTree = 0;
 	theChi2 = 0;
+	fitNorm = 0;
 	//em = 0;
 	//ems = 0;
 	/*-------------  M E A S U R E M E N T   TREE --------------------------*/
 	//Get MEASUREMENT tree
 	//Good except tmeas->GetEntry( iev );
+	//Normalization constant
+	fitNorm = TRACSsim[0]->get_fitNorm();
 
 	TFile *fmeas = new TFile( FileMeas.Data() );
 	tmeas = (TTree*) fmeas->Get("edge");
@@ -253,11 +257,11 @@ Double_t TRACSFit::LeastSquares( ) {
 			voltm[iv] = em->volt[iv] ;
 			timem[iv] = em->time[iv] ;
 		}
-		double simulation;
+		double simulation , norm=TRACSsim[0]->get_fitNorm();
 		for ( Int_t iv = iminm ; iv< imaxm ; iv++ ) {
 			simulation = itp1.Eval(timem[iv]);
 			//std::cout << "Scan="<<ii<<" Iteration= "<<iv<<" m=" << voltm[iv] << " s=" << simulation << " X2=" << chi2 << std::endl;
-			chi2+=( voltm[iv]-simulation )*(voltm[iv]-simulation) ;
+			chi2+=( voltm[iv]-norm*simulation )*(voltm[iv]-norm*simulation) ;
 		}
 
 

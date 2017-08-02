@@ -42,7 +42,7 @@ TRACSInterface::TRACSInterface(std::string filename)
 
 	utilities::parse_config_file(filename, carrierFile, depth, width,  pitch, nns, temp, trapping, fluence, nThreads, n_cells_x, n_cells_y, bulk_type,
 			implant_type, waveLength, scanType, C, dt, max_time, vInit, deltaV, vMax, vDepletion, zInit, zMax, deltaZ, yInit, yMax, deltaY, neff_param, neffType,
-			tolerance, chiFinal, diffusion);
+			tolerance, chiFinal, diffusion, fitNorm);
 
 	// Initialize vectors / n_Steps / detector / set default zPos, yPos, vBias / carrier_collection
 
@@ -277,20 +277,17 @@ void TRACSInterface::simulate_ramo_current()
 	i_total = i_elec + i_hole;
 }
 
-/*
- * Sets the desired Neff parameters in the detector. Fields should be calculated 
- * again before simulating any current. Note that different neff parametrizations 
- * use different parameters so not all may be used at once.
- */
-/**
- *
- * @param newParam
- */
-void TRACSInterface::set_NeffParam(std::vector<double> newParam)
-{
 
-	detector->set_neff_param(newParam);
 
+double TRACSInterface::get_vDep(){
+	return vDepletion;
+}
+double TRACSInterface::get_fitNorm(){
+	return fitNorm;
+}
+
+std::string TRACSInterface::get_neff_type(){
+	return neffType;
 }
 
 /*
@@ -298,7 +295,6 @@ void TRACSInterface::set_NeffParam(std::vector<double> newParam)
  * Returns Neff parametrization
  *
  */
-
 std::vector<double>TRACSInterface::get_NeffParam()
 {
 	return neff_param;
@@ -454,11 +450,39 @@ void TRACSInterface::set_tcount(int tid)
 }
 
 /*
+ * Sets the desired Neff parameters in the detector. Fields should be calculated
+ * again before simulating any current. Note that different neff parametrizations
+ * use different parameters so not all may be used at once.
+ */
+/**
+ *
+ * @param newParam
+ */
+void TRACSInterface::set_FitParam(std::vector<double> newFitParam)
+{
+	detector->setFitParameters(newFitParam);
+	fitNorm = newFitParam[8];
+
+}
+
+void TRACSInterface::set_Fit_Norm(std::vector<double> vector_fitTri)
+{
+	//vDepletion = vector_fitTri[0];
+	fitNorm = vector_fitTri[0];
+
+}
+
+
+
+/*
  * Calculates the electric field and potential inside the detector. It is 
  * required after any modification of the Neff or the bias voltage applied. 
  * Weighting field and potential need not be calculated again since they 
  * are independent on those parameters.
  */
+
+
+
 void TRACSInterface::calculate_fields()
 {
 	// Get detector ready
@@ -543,7 +567,6 @@ void TRACSInterface::loop_on(int tid)
 				auto pos = it - z_shifts.begin();
 				int ind = vPos*z_shifts.size() + pos;
 				vItotals[ind] = i_shaped;
-
 				//-------------------------
 				//Filling histograms-------> commented for Fitting
 				//i_ramo = GetItRamo();

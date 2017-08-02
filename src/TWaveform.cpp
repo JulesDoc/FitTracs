@@ -33,9 +33,7 @@
 #define VMAX -999999.9
 #define CHARSZ 256
 
-//#define T4BL  80.0 //Time for baseline (5.0 is the standard)
-//#define T4BL  20000. //Celso(5.0 is the standard)
-#define T4BL  0.5 //Time for baseline (5.0 is the standard)
+Double_t T4BL=0.5; ;
 
 ClassImp(TWaveform)
 
@@ -103,6 +101,7 @@ TWaveform::TWaveform( TMeas *em ) {
    
    */
    
+   T4BL = (em->Setup==5)? 0.5 : 10. ;
    if ( Polarity == 1 )   //NEW: Sept 2012
           itleft=( 0<iVmax && iVmax<=Nbins )? TMath::Nint( T4BL/(time[1]-time[0]) ) : Nbins ;
    else 

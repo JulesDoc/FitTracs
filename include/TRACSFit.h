@@ -122,7 +122,7 @@ class TRACSFit : public ROOT::Minuit2::FCNBase {
      Int_t ntm, nts   ; //Dimension of tmeas and tsim
      Int_t imins, imaxs, iminm, imaxm ; //Common maximum and minimum indexes
 
-     Double_t theChi2;
+     Double_t theChi2, fitNorm;
 
      vector<Double_t> neffArray;
 

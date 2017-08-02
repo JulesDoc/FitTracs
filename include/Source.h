@@ -25,6 +25,7 @@
  {
  public:
 
+	 //Declaration and default values. They will taken from steering file.
 	// Concentration in transition and extremal points
 	double y0 = -25.; // Neff(z0)
 	double y1 = 0.02; // Neff(z1)

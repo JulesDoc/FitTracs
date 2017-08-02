@@ -417,7 +417,7 @@ std::string utilities::vector_to_string(std::vector<double> input_list)
 void utilities::parse_config_file(std::string fileName, std::string &carrierFile, double &depth, double &width, double &pitch, int &nns, double &temp, double &trapping, double &fluence,
 		int &nThreads, int &n_cells_x, int &n_cells_y, char &bulk_type, char &implant_type, int &waveLength, std::string &scanType, double &C, double &dt, double &max_time,
 		double &v_init, double &deltaV, double &v_max, double &v_depletion, double &zInit, double &zMax, double &deltaZ, double &yInit, double &yMax, double &deltaY,
-		std::vector<double> &neff_param, std::string &neffType, double &tolerance, double &chiFinal, int &diffusion)
+		std::vector<double> &neff_param, std::string &neffType, double &tolerance, double &chiFinal, int &diffusion, double &fitNorm)
 {
 	// Creat map to hold all values as strings 
 	std::map< std::string, std::string> valuesMap;
@@ -674,8 +674,15 @@ void utilities::parse_config_file(std::string fileName, std::string &carrierFile
 	converter.str("");
 	tempString = std::string("");
 
+
+	tempString = std::string("z1");
+	converter << valuesMap[tempString];
+	converter >> neff_param[4];
+	converter.clear();
+	converter.str("");
+	tempString = std::string("");
 	//z0 = 0.0
-	neff_param[4] = 0.0;
+	//neff_param[4] = 0.0;
 
 	tempString = std::string("z1");
 	converter << valuesMap[tempString];
@@ -691,8 +698,14 @@ void utilities::parse_config_file(std::string fileName, std::string &carrierFile
 	converter.str("");
 	tempString = std::string("");
 
+	tempString = std::string("z3");
+	converter << valuesMap[tempString];
+	converter >> neff_param[7];
+	converter.clear();
+	converter.str("");
+	tempString = std::string("");
 	//z3 = depth
-	neff_param[7] = depth;
+	//neff_param[7] = depth;
 
 	tempString = std::string("tolerance");
 	converter << valuesMap[tempString];
@@ -714,6 +727,14 @@ void utilities::parse_config_file(std::string fileName, std::string &carrierFile
 	converter.clear();
 	converter.str("");
 	tempString = std::string("");
+
+	tempString = std::string("normalizator");
+	converter << valuesMap[tempString];
+	converter >> fitNorm;
+	converter.clear();
+	converter.str("");
+	tempString = std::string("");
+
 
 	configFile.close();
 	}

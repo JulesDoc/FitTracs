@@ -56,7 +56,7 @@ void call_from_thread(int tid) {
  * @param tid
  * @param par
  */
-void call_from_thread_NeffPar(int tid, const std::vector<Double_t>& par) {
+void call_from_thread_FitPar(int tid, const std::vector<Double_t>& par) {
 	// every thread instantiates a new TRACSInterface object
 
 	mtx.lock();
@@ -72,7 +72,29 @@ void call_from_thread_NeffPar(int tid, const std::vector<Double_t>& par) {
 	}
 	std::cout << "Thread with tid " << tid << " is OUTSIDE the critical section "<< std::endl;
 	mtx.unlock();
-	TRACSsim[tid]->set_NeffParam(par);
+	TRACSsim[tid]->set_FitParam(par);
+	TRACSsim[tid]->loop_on(tid);
+
+
+}
+
+void call_from_thread_FitNorm(int tid, const std::vector<Double_t>& par) {
+	// every thread instantiates a new TRACSInterface object
+
+	mtx.lock();
+	std::cout << "Thread with tid " << tid << " is INSIDE the critical section "<< std::endl;
+	TRACSsim[tid] = new TRACSInterface(fnm);
+	TRACSsim[tid]->set_tcount(tid);
+	if(tid==0)
+	{
+		i_ramo_array.clear();
+		TRACSsim[tid]->resize_array();
+		TRACSsim[tid]->write_header(tid);
+		TRACSsim.resize(num_threads);
+	}
+	std::cout << "Thread with tid " << tid << " is OUTSIDE the critical section "<< std::endl;
+	mtx.unlock();
+	TRACSsim[tid]->set_Fit_Norm(par);
 	TRACSsim[tid]->loop_on(tid);
 
 

@@ -100,9 +100,9 @@ void CarrierCollection::simulate_drift( double dt, double max_time, double shift
 			double x_init = x[0] + shift_x;
 			double y_init = x[1] + shift_y;
 			//x[0] represents the X position read from the carriers file
-			//shift_x represents the shift applied to X read from the steering file, namely, where to point the laser.
+			//shift_x represents the shift applied to X read from the steering file, namely, where the laser points to.
 			//x[1] represents the Y position read from the carriers file. Y is seen as Z.
-			//shift_y represents the Z (y) position read from the steering file. Since the program does edge-TCT, Z can be defined in one or more steps.
+			//shift_y represents the Z (y) position read from the steering file. Since the program (usually) does edge-TCT, Z can be defined in one or more steps.
 
 			curr_elec += carrier.simulate_drift( dt , max_time, x_init, y_init);
 		}

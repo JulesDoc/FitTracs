@@ -19,7 +19,7 @@
 #include <TRACSFit.h>
 
 void call_from_thread(int);
-void call_from_thread_NeffPar(int, const std::vector<Double_t>& par);
-
+void call_from_thread_FitPar(int, const std::vector<Double_t>& par);
+void call_from_thread_FitNorm(int, const std::vector<Double_t>& par);
 
 #endif /* SRC_THREADING_H_ */
