@@ -19,11 +19,12 @@
  *
  */
 
-#include <CarrierCollection.h>
-#include <CarrierMobility.h>
+#include "../include/CarrierCollection.h"
+
+double extra_y;
 
 CarrierCollection::CarrierCollection(SMSDetector * detector) :
-_detector(detector)
+						_detector(detector)
 {
 
 }
@@ -35,34 +36,62 @@ _detector(detector)
  *
  * @param filename
  */
-void CarrierCollection::add_carriers_from_file(QString filename)
+void CarrierCollection::add_carriers_from_file(QString filename, std::string scanType, double depth)
 {
 	// get char representation and make ifstream
 	char * char_fn = filename.toLocal8Bit().data();
 	std::ifstream infile(char_fn);
+	bool once = true;
+	char carrier_type;
+	double q, x_init, y_init, gen_time;
 
 	// process line by line
 	std::string line;
+
+
+	//Preprocessing for fitting bottom scan_type: Fixing mismatch between detector depth and y_init.
+	//Outside the loop for performance purpose
+	if (scanType == "bottom"){
+		std::getline(infile, line);
+		std::istringstream iss(line);
+		if (!(iss >> carrier_type >> q >> x_init >> y_init >> gen_time)) {
+			std::cout << "Error while reading file" << std::endl;
+		}
+		//Extra in micrometers to shift y_init position
+		extra_y = depth - y_init;
+
+		//Calculate average beam position
+		beamy += x_init;
+		beamz += y_init + extra_y;
+		Carrier carrier(carrier_type, q, x_init, y_init + extra_y, _detector, gen_time);
+		_carrier_list_sngl.push_back(carrier);
+		if ( _carrier_list_sngl.size()!=0 ) {
+			beamy = beamy / _carrier_list_sngl.size();
+			beamz = beamz / _carrier_list_sngl.size();
+		}
+	}
 	while (std::getline(infile, line))
 	{
+
 		std::istringstream iss(line);
-		char carrier_type;
-		double q, x_init, y_init, gen_time;
 		if (!(iss >> carrier_type >> q >> x_init >> y_init >> gen_time)) { 
 			std::cout << "Error while reading file" << std::endl; 
 			break;
 		} 
 
+
 		//Calculate average beam position
 		beamy += x_init;
-		beamz += y_init;
-		Carrier carrier(carrier_type, q, x_init, y_init , _detector, gen_time);
+		beamz += y_init + extra_y;
+		Carrier carrier(carrier_type, q, x_init, y_init + extra_y, _detector, gen_time);
 		_carrier_list_sngl.push_back(carrier);
 	}
 	if ( _carrier_list_sngl.size()!=0 ) {
 		beamy = beamy / _carrier_list_sngl.size();
 		beamz = beamz / _carrier_list_sngl.size();
 	}
+
+
 
 }
 
@@ -85,7 +114,10 @@ void CarrierCollection::simulate_drift( double dt, double max_time, double shift
 		std::valarray<double>&curr_elec, std::valarray<double> &curr_hole, int &totalCrosses)
 {
 
+	double x_init, y_init;
 	int totalCross = 0;
+	bool control = true;
+
 	//fileDiffDrift.open ("fileDiffDrift");
 	// range for through the carriers
 	for (auto carrier : _carrier_list_sngl)
@@ -97,8 +129,9 @@ void CarrierCollection::simulate_drift( double dt, double max_time, double shift
 
 			// get and shift carrier position
 			std::array< double,2> x = carrier.get_x();
-			double x_init = x[0] + shift_x;
-			double y_init = x[1] + shift_y;
+			x_init = x[0] + shift_x;
+			y_init = x[1] + shift_y;
+
 			//x[0] represents the X position read from the carriers file
 			//shift_x represents the shift applied to X read from the steering file, namely, where the laser points to.
 			//x[1] represents the Y position read from the carriers file. Y is seen as Z.

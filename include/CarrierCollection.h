@@ -15,18 +15,18 @@
 #define CARRIER_COLLECTION_H
 
 #include "Carrier.h"
+#include <CarrierMobility.h>
 
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <vector>
 
 #include <QString>
 #include <TH2D.h>
 #include <TString.h>
 #include <TMath.h>
 #include <TRandom3.h>
-
-
 
 /*
  ***********************************CARRIER COLLECTION***********************************
@@ -53,8 +53,8 @@ public:
 
 	double beamy = 0. , beamz = 0.; //Mean position of the injected carriers in detector plane (y,z)
 
-	void add_carriers_from_file(QString filename);
-	void simulate_drift( double dt, double max_time, double shift_x, double shift_y,  std::valarray<double> &curr_elec, std::valarray<double> &curr_hole, int &totalCrosses );
+	void add_carriers_from_file(QString filename, std::string scanType, double depth);
+	void simulate_drift( double dt, double max_time, double shift_x, double shift_y,  std::valarray<double> &curr_elec, std::valarray<double> &curr_hole, int &totalCrosses);
 
 	TH2D get_e_dist_histogram(int n_bins_x, int n_bins_y, TString hist_name = "e_dist", TString hist_title ="e_dist");
 	TH2D get_e_dist_histogram(int n_bins_x, int n_bins_y, double shift_x, double shift_y, TString hist_name = "e_dist", TString hist_title ="e_dist");

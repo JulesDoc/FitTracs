@@ -84,7 +84,7 @@ TRACSFit::TRACSFit( TString FileMeas , TString FileConf ,  TString howstr ) {
 	//Get MEASUREMENT tree
 	//Good except tmeas->GetEntry( iev );
 	//Normalization constant
-	fitNorm = TRACSsim[0]->get_fitNorm();
+	//fitNorm = TRACSsim[0]->get_fitNorm();
 
 	TFile *fmeas = new TFile( FileMeas.Data() );
 	tmeas = (TTree*) fmeas->Get("edge");
@@ -253,15 +253,19 @@ Double_t TRACSFit::LeastSquares( ) {
 		//Retrieve measured waveform fulfilling condition "how"
 		iev = listm->GetEntry(ii) ;
 		tmeas->GetEntry( iev );
+		fitNorm = TRACSsim[0]->get_fitNorm();
 		for ( Int_t iv = 0 ; iv< ntm ; iv++ ) {
-			voltm[iv] = em->volt[iv] ;
-			timem[iv] = em->time[iv] ;
+			voltm[iv] = em->volt[iv] - wv->BlineGetMean();
+			voltm[iv] = -1 *voltm[iv]; //Change sign of Meas *******
+ 			timem[iv] = em->time[iv] ;
 		}
-		double simulation , norm=TRACSsim[0]->get_fitNorm();
+		double simulation; //, norm=TRACSsim[0]->get_fitNorm();
 		for ( Int_t iv = iminm ; iv< imaxm ; iv++ ) {
 			simulation = itp1.Eval(timem[iv]);
+
+		if (simulation != 0) //For not to fit the 0's part!.********
 			//std::cout << "Scan="<<ii<<" Iteration= "<<iv<<" m=" << voltm[iv] << " s=" << simulation << " X2=" << chi2 << std::endl;
-			chi2+=( voltm[iv]-norm*simulation )*(voltm[iv]-norm*simulation) ;
+			chi2+=( voltm[iv]-fitNorm*simulation )*(voltm[iv]-fitNorm*simulation) ;
 		}
 
 

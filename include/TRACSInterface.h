@@ -84,6 +84,7 @@ private:
 	double depletion_width;
 	int diffusion;
 	double fitNorm;
+	//double gen_time;
 
 	int total_crosses;
 	bool underDep;
@@ -199,7 +200,14 @@ public:
 	UShort_t GetMinute();
 	UShort_t GetSecond();
 	double get_vDep();
+	double get_depth();
 	double get_fitNorm();
+	double get_capacitance();
+	double get_fluence();
+	double get_vBias();
+	double get_dt();
+	std::string get_scanType();
+	//double get_genTime();
 	std::vector<double> get_NeffParam();
 	std::string get_neff_type();
 	int GetnSteps();

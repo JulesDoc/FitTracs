@@ -42,7 +42,7 @@ TRACSInterface::TRACSInterface(std::string filename)
 
 	utilities::parse_config_file(filename, carrierFile, depth, width,  pitch, nns, temp, trapping, fluence, nThreads, n_cells_x, n_cells_y, bulk_type,
 			implant_type, waveLength, scanType, C, dt, max_time, vInit, deltaV, vMax, vDepletion, zInit, zMax, deltaZ, yInit, yMax, deltaY, neff_param, neffType,
-			tolerance, chiFinal, diffusion, fitNorm);
+			tolerance, chiFinal, diffusion, fitNorm/*, gen_time*/);
 
 	// Initialize vectors / n_Steps / detector / set default zPos, yPos, vBias / carrier_collection
 
@@ -93,7 +93,7 @@ TRACSInterface::TRACSInterface(std::string filename)
 
 	carrierCollection = new CarrierCollection(detector);
 	QString carrierFileName = QString::fromUtf8(carrierFile.c_str());
-	carrierCollection->add_carriers_from_file(carrierFileName);
+	carrierCollection->add_carriers_from_file(carrierFileName, scanType, depth);
 
 
 	//currents
@@ -210,17 +210,19 @@ TH1D * TRACSInterface::GetItRc()
 	}
 	else
 	{	
+
 		//TF1 *f1 = new TF1("f1","abs(sin(x)/x)*sqrt(x)",0,10);
 		//float r = f1->GetRandom();
 		TString htit, hname;
 		htit.Form("ramo_rc%d%d", tcount, count2);
 		hname.Form("Ramo_current_%d_%d", tcount, count2);
-		i_rc    = new TH1D(htit,hname,n_tSteps, 0.0, max_time);
+		i_rc    = new TH1D(htit,hname, n_tSteps, 0.0, max_time);
 
 		double RC = 50.*C; // Ohms*Farad
 		double alfa = dt/(RC+dt);
 
-		for (int j = 1; j <n_tSteps; j++) 
+
+		for (int j = 1; j <n_tSteps; j++)
 		{
 			i_shaped[j]=i_shaped[j-1]+alfa*(i_total[j]-i_shaped[j-1]);
 			i_rc->SetBinContent(j+1, i_shaped[j]);
@@ -286,10 +288,36 @@ double TRACSInterface::get_fitNorm(){
 	return fitNorm;
 }
 
+double TRACSInterface::get_depth(){
+	return depth;
+}
+
+double TRACSInterface::get_capacitance(){
+	return C;
+}
+
+double TRACSInterface::get_fluence(){
+	return fluence;
+}
+
+double TRACSInterface::get_vBias(){
+	return vInit;
+}
+
 std::string TRACSInterface::get_neff_type(){
 	return neffType;
 }
 
+double TRACSInterface::get_dt(){
+	return dt;
+}
+
+std::string TRACSInterface::get_scanType(){
+	return scanType;
+}
+/*double TRACSInterface::get_genTime(){
+	return gen_time;
+}*/
 /*
  *
  * Returns Neff parametrization
@@ -460,15 +488,28 @@ void TRACSInterface::set_tcount(int tid)
  */
 void TRACSInterface::set_FitParam(std::vector<double> newFitParam)
 {
-	detector->setFitParameters(newFitParam);
+
+	for (uint i = 0 ; neff_param.size(); i++)
+	{
+		neff_param[i] = newFitParam[i];
+	}
 	fitNorm = newFitParam[8];
+	depth = newFitParam[9];
+	delete detector;
+	detector = new SMSDetector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType, diffusion, dt);
+	//detector->setFitParameters(newFitParam);
 
 }
 
 void TRACSInterface::set_Fit_Norm(std::vector<double> vector_fitTri)
 {
-	//vDepletion = vector_fitTri[0];
+
 	fitNorm = vector_fitTri[0];
+	vDepletion = vector_fitTri[1];
+	depth = vector_fitTri[2];
+	C = vector_fitTri[3];
+	delete detector;
+	detector = new SMSDetector(pitch, width, depth, nns, bulk_type, implant_type, n_cells_x, n_cells_y, temp, trapping, fluence, neff_param, neffType, diffusion, dt);
 
 }
 
@@ -522,7 +563,7 @@ void TRACSInterface::set_neffType(std::string newParametrization)
 void TRACSInterface::set_carrierFile(std::string newCarrFile)
 {
 	QString carrierFileName = QString::fromUtf8(newCarrFile.c_str());
-	carrierCollection->add_carriers_from_file(carrierFileName);
+	carrierCollection->add_carriers_from_file(carrierFileName, scanType, depth);
 }
 
 /**

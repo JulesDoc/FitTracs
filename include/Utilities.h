@@ -31,7 +31,11 @@
 #include "SMSDetector.h"
 #include <cmath> 
 #include <valarray>
+#include <TMath.h>
 
+#include <Threading.h>
+#include <TRACSInterface.h>
+#include <Global.h>
 //#include "qcustomplot.h"
 #include <QFile>
 
@@ -58,7 +62,7 @@ namespace utilities
 	void parse_config_file(std::string fileName, std::string &carrierFile, double &depth, double &width, double &pitch, int &nns, double &temp, double &trapping, double &fluence,
 			int &nThreads, int &n_cells_x, int &n_cells_y, char &bulk_type, char &implant_type, int &waveLength, std::string &scanType, double &C, double &dt, double &max_time,
 			double &v_init, double &deltaV, double &v_max, double &v_depletion, double &zInit, double &zMax, double &deltaZ, double &yInit, double &yMax, double &deltaY,
-			std::vector<double> &neff_param, std::string &neffType, double &tolerance, double &chiFinal, int &diffusion, double &fitNorm);
+			std::vector<double> &neff_param, std::string &neffType, double &tolerance, double &chiFinal, int &diffusion, double &fitNorm/*, double &gen_time*/);
 
 	void parse_config_file(std::string fileName, std::string &carrierFile, double &depth, double &width, double &pitch, int &nns, double &temp, double &trapping, double &fluence,
 			int &n_cells_x, int &n_cells_y, char &bulk_type, char &implant_type, double &C, double &dt, double &max_time, double &vBias,double &vDepletion, double &zPos,

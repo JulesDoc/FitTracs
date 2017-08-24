@@ -157,7 +157,7 @@ std::valarray<double> Carrier::simulate_drift(double dt, double max_time, double
 
 	}
 	/*End NO depleted area*/
-	if ((regularCarrier) && (_x[1] < _detector->get_depletionWidth())){
+	if ((regularCarrier) && (_x[1] <= _detector->get_depletionWidth())){
 
 		int it0 = ( _detector->diffusionON() ) ? TMath::Nint( (_gen_time + tDiff)/dt ) : TMath::Nint( _gen_time/dt ) ;
 		//bool saleOut = false;

@@ -172,7 +172,7 @@ void utilities::write_to_file_row(std::string filename, TH1D *hconv, double temp
 
 
 	  // Scan on times
-	  for (unsigned int i = 1; i <= steps; i++ )
+      for (unsigned int i = 1; i <= steps; i++ )
 	  {
 			out << std::fixed << std::setprecision(9) << hconv->GetBinContent(i) << " "; 
 			//std::cout <<  steps << " " << i << " " << hconv->GetBinContent(i) << std::endl;
@@ -417,7 +417,7 @@ std::string utilities::vector_to_string(std::vector<double> input_list)
 void utilities::parse_config_file(std::string fileName, std::string &carrierFile, double &depth, double &width, double &pitch, int &nns, double &temp, double &trapping, double &fluence,
 		int &nThreads, int &n_cells_x, int &n_cells_y, char &bulk_type, char &implant_type, int &waveLength, std::string &scanType, double &C, double &dt, double &max_time,
 		double &v_init, double &deltaV, double &v_max, double &v_depletion, double &zInit, double &zMax, double &deltaZ, double &yInit, double &yMax, double &deltaY,
-		std::vector<double> &neff_param, std::string &neffType, double &tolerance, double &chiFinal, int &diffusion, double &fitNorm)
+		std::vector<double> &neff_param, std::string &neffType, double &tolerance, double &chiFinal, int &diffusion, double &fitNorm/*, double &gen_time*/)
 {
 	// Creat map to hold all values as strings 
 	std::map< std::string, std::string> valuesMap;
@@ -734,6 +734,13 @@ void utilities::parse_config_file(std::string fileName, std::string &carrierFile
 	converter.clear();
 	converter.str("");
 	tempString = std::string("");
+
+	/*tempString = std::string("generation_time");
+		converter << valuesMap[tempString];
+		converter >> gen_time;
+		converter.clear();
+		converter.str("");
+		tempString = std::string("");*/
 
 
 	configFile.close();

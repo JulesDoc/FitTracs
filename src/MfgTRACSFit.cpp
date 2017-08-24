@@ -47,12 +47,20 @@ std::vector<std::thread> t;
 boost::posix_time::time_duration total_timeTaken ;
 TRACSFit *fit ;
 std::string neffType;
+bool irradiated;
+
 using namespace ROOT::Minuit2;
 
 int main( int argc, char *argv[]) {
 
 	double fitParamVdep;
 	double fitParamNorm;
+	double fitParamDepth;
+	double fitParamCapac;
+	double vBias;
+	double vDep;
+	double fluence;
+	irradiated = false;
 	vector<Double_t> parIni;
 	Int_t parIniSize;
 	vector<Double_t> parErr;
@@ -91,17 +99,23 @@ int main( int argc, char *argv[]) {
 	fit = new TRACSFit( FileMeas, FileConf , how ) ;
 
 	neffType = TRACSsim[0]->get_neff_type();
+	vBias = TRACSsim[0]->get_vBias();
+	vDep = TRACSsim[0]->get_vDep();
+	fluence = TRACSsim[0]->get_fluence();
 
-	/*********Begin Trilinear Fit. For irradiated dectectors****************/
+	/*********Begin Fit. For irradiated or undepleted dectectors****************/
 	/***********************************************************************/
 	//Fitting Neff and normalizator
 
-	if (neffType == "Trilinear"){
+	if ((fluence > 0) || (vBias < vDep)){
+
+		irradiated = true;
 
 		//Define parameters and their errors to Minuit
 
 		parIni = TRACSsim[0]->get_NeffParam();
 		parIni.push_back(TRACSsim[0]->get_fitNorm());
+		parIni.push_back(TRACSsim[0]->get_depth());
 		parIniSize = parIni.size() ;
 		//parErr = parErr(nNeff, 60.) ;
 		//To the vector initialization correctly using a preallocate variable
@@ -124,9 +138,9 @@ int main( int argc, char *argv[]) {
 		//upar.Fix(3) ;
 		upar.Fix(4) ; upar.Fix(5); upar.Fix(6) ; upar.Fix(7);
 		//upar.Fix(8); //Normalizator
-
+		//upar.Fix(9); //Depth
 		std::cout << "=============================================" << std::endl;
-		std::cout<<"Initial parameters: "<<upar<<std::endl;
+		std::cout << "Initial parameters: "<<upar<<std::endl;
 		std::cout << "=============================================" << std::endl;
 		std::cout << "=============================================" << std::endl;
 		std::cout << "tolerance= " << TRACSsim[0]->GetTolerance()    << std::endl;
@@ -139,7 +153,7 @@ int main( int argc, char *argv[]) {
 
 		ROOT::Math::MinimizerOptions::SetDefaultPrintLevel(1);
 		ROOT::Math::MinimizerOptions::SetDefaultTolerance(TRACSsim[0]->GetTolerance());
-		MnMigrad mn( *fit , upar , MnStrategy(0)) ;
+		MnMigrad mn( *fit , upar , MnStrategy(1)) ;
 		FunctionMinimum min = mn() ;
 
 		//Status report
@@ -185,21 +199,25 @@ int main( int argc, char *argv[]) {
 			parErr[i]=min.UserState().Error(i);
 		}
 	}
-	/*********Finish Trilinear fit******************************************/
+	/*********Finish Irradiated/undepleted fit******************************************/
 	/***********************************************************************/
 
 
-	/*********Begin Triconstant fit. Non-irradiated dectectors**************/
+	/*********Begin depleted fit. Non-irradiated dectectors**************/
 	/***********************************************************************/
-	//Fitting only normalizator.
+	//Fitting normalizator, Vdep, depth, Capacitance if detector is depleted and non-irradiated
 
 
-	if (neffType == "Triconstant"){
+	if (fluence == 0) /*&& (vBias >= vDep)*/{
+
+		irradiated = false;
 
 		fitParamNorm = TRACSsim[0]->get_fitNorm();
-		//fitParamVdep = TRACSsim[0]->get_vDep();
+		fitParamVdep = TRACSsim[0]->get_vDep();
+		fitParamDepth = TRACSsim[0]->get_depth();
+		fitParamCapac = TRACSsim[0]->get_capacitance();
 
-		parIni = {fitParamNorm};
+		parIni = {fitParamNorm, fitParamVdep, fitParamDepth, fitParamCapac};
 		parIniSize = parIni.size() ;
 
 		parErr.resize(parIniSize);
@@ -213,8 +231,13 @@ int main( int argc, char *argv[]) {
 			upar.SetName( i , pname );
 		}
 
+		//upar.Fix(0) ; //Normalizator
+		upar.Fix(1); //Depletion voltage
+		//upar.Fix(2); //Detector depth
+		//upar.Fix(3); //Capacitance
+
 		std::cout << "=============================================" << std::endl;
-		std::cout<<"Initial parameters: "<<upar<<std::endl;
+		std::cout << "Initial parameters: "<<upar<<std::endl;
 		std::cout << "=============================================" << std::endl;
 		std::cout << "=============================================" << std::endl;
 		std::cout << "tolerance= " << TRACSsim[0]->GetTolerance()    << std::endl;
@@ -244,15 +267,13 @@ int main( int argc, char *argv[]) {
 	}
 
 
-	/*********Finish Triconstant**********************************************/
+	/*********Finish depleted non-irradiated**********************************************/
 	/***********************************************************************/
 
 	//Calculate TCT pulses with the fit output parameters
 	for (int i = 0; i < num_threads; ++i) {
-		if (neffType == "Trilinear")
-			t[i] = std::thread(call_from_thread_FitPar, i, parIni);
-		if (neffType == "Triconstant")
-			t[i] = std::thread(call_from_thread_FitNorm, i, parIni);
+		if (irradiated) t[i] = std::thread(call_from_thread_FitPar, i, parIni);
+		else t[i] = std::thread(call_from_thread_FitNorm, i, parIni);
 
 	}
 
@@ -299,10 +320,8 @@ Double_t TRACSFit::operator() ( const std::vector<Double_t>& par  ) const {
 	boost::posix_time::ptime start = boost::posix_time::second_clock::local_time();
 
 	for (int i = 0; i < num_threads; ++i) {
-		if (neffType == "Trilinear")
-			t[i] = std::thread(call_from_thread_FitPar, i, par);
-		if (neffType == "Triconstant")
-			t[i] = std::thread(call_from_thread_FitNorm, i, par);
+		if (irradiated) t[i] = std::thread(call_from_thread_FitPar, i, par);
+		else t[i] = std::thread(call_from_thread_FitNorm, i, par);
 	}
 
 	for (int i = 0; i < num_threads; ++i) {

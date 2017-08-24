@@ -56,7 +56,7 @@ namespace ROOT {
       ::TMeasHeader *ptr = 0;
       static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TMeasHeader >(0);
       static ::ROOT::TGenericClassInfo 
-         instance("TMeasHeader", ::TMeasHeader::Class_Version(), "TMeasHeader.h", 24,
+         instance("TMeasHeader", ::TMeasHeader::Class_Version(), "include/TMeasHeader.h", 24,
                   typeid(::TMeasHeader), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &::TMeasHeader::Dictionary, isa_proxy, 16,
                   sizeof(::TMeasHeader) );
@@ -226,7 +226,7 @@ namespace {
 0
     };
     static const char* includePaths[] = {
-"/home/jcalvopi/FitTracs/include/",
+"~/FitTracs/include/",
 "/usr/local/root/include",
 "/home/jcalvopi/FitTracs/",
 0

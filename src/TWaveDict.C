@@ -56,7 +56,7 @@ namespace ROOT {
       ::TWaveform *ptr = 0;
       static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TWaveform >(0);
       static ::ROOT::TGenericClassInfo 
-         instance("TWaveform", ::TWaveform::Class_Version(), "TWaveform.h", 30,
+         instance("TWaveform", ::TWaveform::Class_Version(), "include/TWaveform.h", 30,
                   typeid(::TWaveform), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &::TWaveform::Dictionary, isa_proxy, 16,
                   sizeof(::TWaveform) );
@@ -196,7 +196,7 @@ namespace {
 0
     };
     static const char* includePaths[] = {
-"/home/jcalvopi/FitTracs/include/",
+"~/FitTracs/include/",
 "/usr/local/root/include",
 "/home/jcalvopi/FitTracs/",
 0

@@ -108,40 +108,40 @@ void SMSDetector::set_voltages(double v_bias, double v_depletion)
 {
 	_vdep = v_depletion; // Store depletion voltage
 	_v_bias = v_bias;
-	_depleted = (_v_bias > _vdep) ? true : false;
+	_depleted = (_v_bias >= _vdep) ? true : false;
 	_v_strips = (_implant_type == 'n') ? v_bias : 0.0;
 	_v_backplane = (_implant_type == 'p') ? v_bias : 0.0;
 
 	// neff defined in F/microns
 	//original only taking depth of the detector (case not depleted is ignored): _f_poisson = ((_bulk_type== 'p') ? +1.0 : -1.0)*(-2.0*v_depletion)/(_depth*_depth);
 
-	if (_depleted){//Detector is depleted
-		_depletion_width = _depth;
-		_f_poisson = ((_bulk_type== 'p') ? +1.0 : -1.0)*(-2.0*_v_bias)/(_depth*_depth);
-		std::cout << "fp depleted: " << _f_poisson << std::endl;
-		//std::cout << "Depletion Width: " << _depletion_width << std::endl;
+	if (_fluence == 0){
 
-	}
+		if (_depleted){//Detector is depleted
+			_depletion_width = _depth;
+			_f_poisson = ((_bulk_type== 'p') ? +1.0 : -1.0)*(-2.0*_vdep)/(_depth*_depth);
+			std::cout << "fp depleted: " << _f_poisson << std::endl;
+			//std::cout << "Depletion Width: " << _depletion_width << std::endl;
 
-	else{//Detector is not depleted
+		}
 
-		_depletion_width = _depth * sqrt((abs(_v_strips-_v_backplane))/_vdep);
-		_f_poisson = ((_bulk_type== 'p') ? +1.0 : -1.0)*(-2.0*_v_bias)/(_depletion_width * _depletion_width);
-		std::cout << "fp NO depleted: " << _f_poisson << std::endl;
-		std::cout << "Depletion Width: " << _depletion_width << std::endl;
-	}
-
-
-	if (_fluence == 0){//AND NO irrad, then change neff parameters. Otherwise taken from steering.
-		//_neff_type = "Triconstant";
-		_neff_param[0] = _f_poisson; //y0
-		_neff_param[1] = 0.0; // y1
-		_neff_param[2] = 0.0; // y2
-		_neff_param[3] = 0.0; // y3
-		_neff_param[4] = 0.0; // z0
-		_neff_param[5] = _depletion_width; // z1
-		_neff_param[6] = 0.0; // z2
-		_neff_param[7] = 0.0; // z3
+		else{//Detector is not depleted
+			_depletion_width = _depth * sqrt((abs(_v_strips-_v_backplane))/_vdep);
+			_f_poisson = ((_bulk_type== 'p') ? +1.0 : -1.0)*(-2.0*_v_bias)/(_depletion_width * _depletion_width);
+			std::cout << "fp NO depleted: " << _f_poisson << std::endl;
+			std::cout << "Depletion Width: " << _depletion_width << std::endl;
+			//if (_fluence == 0){//AND NO irrad, then change neff parameters. Otherwise taken from steering.
+			//_neff_type = "Triconstant";
+			_neff_param[0] = _f_poisson; //y0
+			_neff_param[1] = _f_poisson; // y1
+			_neff_param[2] = _f_poisson; // y2
+			_neff_param[3] = _f_poisson; // y3
+			_neff_param[4] = 0.0; // z0
+			_neff_param[5] = _depletion_width; // z1
+			_neff_param[6] = _depletion_width; // z2
+			_neff_param[7] = _depletion_width; // z3
+			//}
+		}
 	}
 	//if fluence > 0, parameters are taken in the constructor inicialization list, coming from the config file
 
@@ -150,11 +150,8 @@ void SMSDetector::set_voltages(double v_bias, double v_depletion)
 /*
  * Method for solving the weighting potential using Laplace triangles 
  */
-
-/**
- *
- */
 void SMSDetector::solve_w_u()
+//Weighting Potential
 {
 
 	// Solving Laplace equation f = 0
@@ -168,7 +165,7 @@ void SMSDetector::solve_w_u()
 	Constant backplane_V(0.0);
 
 	// Set BC variables based on depletion conditions
-	//if(!_depleted){
+	/*if(!_depleted){
 
 	//Redefinition of boundary conditions
 	CentralStripBoundaryWP central_stripUnderDep(_pitch, _width, _nns, _depletion_width);
@@ -183,54 +180,56 @@ void SMSDetector::solve_w_u()
 	bcs.push_back(&neighbour_strip_BC);
 	bcs.push_back(&backplane_BC);
 	solve(_a_p == _L_p , _w_u, bcs);
-	//}
-//else{
+	}*/
 
-	//Old boundary conditions
-	/*	DirichletBC central_strip_BC(_V_p, central_strip_V, _central_strip);
+	//else{
+
+		//Old boundary conditions
+		DirichletBC central_strip_BC(_V_p, central_strip_V, _central_strip);
 		DirichletBC neighbour_strip_BC(_V_p, neighbour_strip_V, _neighbour_strips);
 		DirichletBC backplane_BC(_V_p, backplane_V, _backplane);
 		bcs.push_back(&central_strip_BC);
 		bcs.push_back(&neighbour_strip_BC);
 		bcs.push_back(&backplane_BC);
-		solve(_a_p == _L_p , _w_u, bcs);*/
-	//	}
+		solve(_a_p == _L_p , _w_u, bcs);
+	//}
 
 
 }
 
 /*
- * Method for solving the XXXXXXXXX d_u (drifting potential) XXXXXXXXXXX using Poisson's equation
+ * Method for solving the d_u (drifting potential) using Poisson's equation
  */
-
 void SMSDetector::solve_d_u()
 {
 	Constant fpois(_f_poisson);
+
 	std::vector<const DirichletBC*> bcs;
 	Source f;
 
 
-	//if (_fluence == 0 && _depleted) //NO irrad but YES depleted. fpoisson, charge distribution, is a constant during the whole detector
-	//{
-	//	_L_p.f = fpois;
-		//	_trapping_time = std::numeric_limits<double>::max();
-	//}
+	if (_fluence == 0 && _depleted) //NO irrad but YES depleted. fpoisson, charge distribution, is a constant during the whole detector
+	{
+	_L_p.f = fpois;
+	_trapping_time = std::numeric_limits<double>::max();
+	}
 
-	//else //If YES Irrad OR NO depleted, charge distribution is not a constant. Parameters from steering file.
-	//{
+	else
+	//If YES Irrad OR NO depleted, charge distribution is not a constant. Parameters from steering file of from above if non-depleted.
+	{
 
 
-		f.set_NeffApproach(_neff_type);
-		f.set_y0(_neff_param[0]);
-		f.set_y1(_neff_param[1]);
-		f.set_y2(_neff_param[2]);
-		f.set_y3(_neff_param[3]);
-		f.set_z0(_neff_param[4]);
-		f.set_z1(_neff_param[5]);
-		f.set_z2(_neff_param[6]);
-		f.set_z3(_neff_param[7]);
-		_L_p.f = f;
-	//}
+	f.set_NeffApproach(_neff_type);
+	f.set_y0(_neff_param[0]);
+	f.set_y1(_neff_param[1]);
+	f.set_y2(_neff_param[2]);
+	f.set_y3(_neff_param[3]);
+	f.set_z0(_neff_param[4]);
+	f.set_z1(_neff_param[5]);
+	f.set_z2(_neff_param[6]);
+	f.set_z3(_neff_param[7]);
+	_L_p.f = f;
+	}
 
 	// Set BC values
 	Constant central_strip_V(_v_strips);
@@ -238,7 +237,7 @@ void SMSDetector::solve_d_u()
 	Constant backplane_V(_v_backplane);
 
 	// Set BC variables based on depletion conditions
-	//if(!_depleted){ //NO depleted. Boundary conditions changed to the depletion_width.
+	/*if(!_depleted){ //NO depleted. Boundary conditions changed to the depletion_width.
 
 	//Redefinition of boundary conditions
 	CentralStripBoundaryWP central_stripUnderDep(_pitch, _width, _nns, _depletion_width);
@@ -255,8 +254,12 @@ void SMSDetector::solve_d_u()
 	solve(_a_p == _L_p , _d_u, bcs);
 	//When solving, go to Source.h to (eval method) establish the source term for solving the Poisson equation using the neff_type and the neff_param recently
 	//set for the Source f.
-	/*	}//old Boundary conditions
-	else{
+	}*/
+
+	//old Boundary conditions
+
+	//else{
+
 		DirichletBC central_strip_BC(_V_p, central_strip_V, _central_strip);
 		DirichletBC neighbour_strip_BC(_V_p, neighbour_strip_V, _neighbour_strips);
 		DirichletBC backplane_BC(_V_p, backplane_V, _backplane);
@@ -264,7 +267,7 @@ void SMSDetector::solve_d_u()
 		bcs.push_back(&neighbour_strip_BC);
 		bcs.push_back(&backplane_BC);
 		solve(_a_p == _L_p , _d_u, bcs);
-	}*/
+	//}
 }
 
 /*
