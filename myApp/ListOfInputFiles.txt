@@ -1,3 +1,0 @@
-irrad_dt200ps_5pF_t-2147483648ns_dz60um_dy5dV100V_2nns_edge_0_rc.Zscan.root 	z=80,140,200,260, 200 ps, 10 ns
-
-
